@@ -233,7 +233,7 @@
       }
     ],
     "planejamento": "Planejamento BANCO DE DADOS 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -470,7 +470,7 @@
       }
     ],
     "planejamento": "Planejamento CLDI 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -707,7 +707,7 @@
       }
     ],
     "planejamento": "Planejamento CLDII 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -944,7 +944,7 @@
       }
     ],
     "planejamento": "Planejamento EAI 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -1181,7 +1181,7 @@
       }
     ],
     "planejamento": "Planejamento PS 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -1418,7 +1418,7 @@
       }
     ],
     "planejamento": "Planejamento REDES 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
@@ -1655,18 +1655,18 @@
       }
     ],
     "planejamento": "Planejamento SC 23.pdf",
-    "origem": "Planejamento UNIVAP 2023",
+    "origem": "Planejamento técnico (2023)",
     "instituicao": "UNIVAP"
   },
   {
     "id": "maximus_tca",
-    "nome": "TCA — Maximus",
+    "nome": "TCA",
     "sigla": "TCA",
     "ano": "1º e 2º anos",
     "icone": "book-open",
-    "descricao": "Trabalho de Conclusão de Ano da Maximus: investigação, planejamento e produção científica com apoio do Maximus INIC.",
+    "descricao": "Trabalho de Conclusão de Ano: pesquisa, planejamento e desenvolvimento do projeto.",
     "instituicao": "MAXIMUS",
-    "origem": "Trilha didática Maximus TCA/TCC, baseada no kit de construção do tema (2026)",
+    "origem": "Trilha didática de TCA (2026)",
     "semanas": [
       {
         "n": 1,
@@ -1804,13 +1804,13 @@
   },
   {
     "id": "maximus_tcc",
-    "nome": "TCC — Maximus",
+    "nome": "TCC",
     "sigla": "TCC",
     "ano": "3º ano",
     "icone": "graduation-cap",
-    "descricao": "Trabalho de Conclusão de Curso da Maximus, com orientação científica e acompanhamento no Maximus INIC.",
+    "descricao": "Trabalho de Conclusão de Curso: pesquisa, resultados, documentação e apresentação.",
     "instituicao": "MAXIMUS",
-    "origem": "Trilha didática Maximus TCA/TCC, baseada no kit de construção do tema (2026)",
+    "origem": "Trilha didática de TCC (2026)",
     "semanas": [
       {
         "n": 1,
