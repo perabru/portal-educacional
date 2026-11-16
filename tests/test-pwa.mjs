@@ -3,6 +3,8 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 
 const source=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');
+const paths=JSON.parse(source.match(/const CORE=(\[[^;]+\]);/)[1].replaceAll("'",'\"'));
+for(const path of paths){const file=path==='./'?'index.html':path.slice(2);assert((await readFile(new URL('../'+file,import.meta.url))).length>0,'Asset offline ausente: '+file)}
 const origin='https://perabru.github.io';
 const scope=origin+'/portal-educacional/';
 const index=scope+'index.html';

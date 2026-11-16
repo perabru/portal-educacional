@@ -12,17 +12,19 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Portal Educacional"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<link rel="stylesheet" href="styles.css?v=20261116.6"/>
+<link rel="preload" href="fonts/pixelify-regular.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="stylesheet" href="styles.css?v=20261116.7"/>
+<link rel="stylesheet" href="pixel.css?v=20261116.7"/>
 </head>
 <body data-theme="dark">
-<div id="splash" class="splash"><div class="splash-inner"><div class="loading-pixel">▣</div><h2>PORTAL<span>EDUCACIONAL</span></h2><p>Carregando...</p><div class="loading-bar"><i></i></div></div></div>
+<div id="splash" class="splash" role="status" aria-label="Carregando o portal"><div class="splash-inner"><div class="pixel-candle-stage" aria-hidden="true"><div class="pixel-candle candle-short"><i class="candle-flame"></i><span class="candle-eyes"></span></div><div class="pixel-candle candle-tall"><i class="candle-flame"></i><span class="candle-eyes"></span></div></div><h2>PORTAL<span>EDUCACIONAL</span></h2><div class="pixel-letter-loader" aria-hidden="true"><span>C</span><span>A</span><span>R</span><span>R</span><span>E</span><span>G</span><span>A</span><span>N</span><span>D</span><span>O</span></div><p>Preparando suas disciplinas</p><div class="loading-bar"><i></i></div></div></div>
 <div id="login-screen" class="login-screen is-hidden">
   <div class="login-glow"></div>
-  <div class="login-card"><button type="button" class="theme-switch theme-switch-login" data-theme-toggle aria-label="Alternar tema"><span data-theme-symbol>☾</span><span data-theme-caption>Modo escuro</span></button>
+  <div class="login-card"><button type="button" class="theme-switch theme-switch-login" data-theme-toggle aria-label="Alternar tema"><span class="theme-track" aria-hidden="true"><span class="theme-thumb"></span></span><span data-theme-caption>Modo escuro</span></button>
     <div class="pixel-shape logo-shape" aria-hidden="true"><span>P<span class="red">.</span></span></div>
-    <div class="eyebrow">PORTAL EDUCACIONAL</div>
-    <h1>Acesse suas disciplinas</h1>
-    <p>Consulte aulas, atividades, materiais e notas.</p>
+    <div class="window-chrome" aria-hidden="true"><span></span><span></span><span></span></div><div class="eyebrow">PORTAL EDUCACIONAL</div>
+    <h1>Sua próxima<br>aula começa aqui.</h1>
+    <p>Entre com Google, complete seu cadastro e acesse suas disciplinas.</p>
     <button class="primary-btn full" id="login-btn"><span class="google-mark">G</span> Entrar com Google</button>
     <div id="login-help" class="login-help"></div>
     <small>Entre com sua conta Google.</small>
@@ -37,20 +39,20 @@
        <button data-page="home" class="nav-item active"><span>▦</span> Visão geral</button>
        <button data-page="courses" class="nav-item"><span>▤</span> Disciplinas</button>
        <button data-page="tasks" class="nav-item"><span>☑</span> Atividades</button>
-       <button data-page="submissions" class="nav-item"><span></span> Minhas entregas</button>
+       <button data-page="submissions" class="nav-item"><span>📂</span> Minhas entregas</button>
        <button data-page="notes" class="nav-item"><span>▥</span> Minhas notas</button><button data-page="profile" class="nav-item"><span>♙</span> Meu perfil</button>
     </nav>
     <span class="menu-caption">RECURSOS</span>
     <nav class="main-nav">
        <button data-page="extras" class="nav-item"><span>✦</span> Cursos extras</button>
-       <button data-page="tools" class="nav-item"><span>⌘</span> Ferramentas</button><button data-page="materials" class="nav-item"><span></span> Materiais</button>
+       <button data-page="tools" class="nav-item"><span>⌘</span> Ferramentas</button><button data-page="materials" class="nav-item"><span>📚</span> Materiais</button>
        <button data-page="guide" class="nav-item"><span>?</span> Guia do GitHub</button>
        <button data-page="teacher" class="nav-item is-hidden" id="teacher-nav"><span>♛</span> Painel administrador</button>
     </nav>
-    <div class="sidebar-bottom"><div class="github-rule"><b>Entregas</b><span>Envie o link de seu projeto no GitHub.</span></div><button id="theme-btn" class="soft-button" type="button" data-theme-toggle aria-label="Alternar tema"><span data-theme-symbol>☾</span><span data-theme-caption>Modo escuro</span></button><button id="logout-btn" type="button" data-signout class="soft-button"><span></span> Sair da conta</button></div>
+    <div class="sidebar-bottom"><div class="github-rule"><b>Entregas</b><span>Envie o link de seu projeto no GitHub.</span></div><button id="theme-btn" class="soft-button" type="button" data-theme-toggle aria-label="Alternar tema"><span class="theme-track" aria-hidden="true"><span class="theme-thumb"></span></span><span data-theme-caption>Modo escuro</span></button><button id="logout-btn" type="button" data-signout class="soft-button"><span>▤</span> Sair da conta</button></div>
   </aside>
   <div class="main-column">
-    <header class="topbar"><button class="mobile-menu" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">☰</button><div class="breadcrumb" id="breadcrumb">INÍCIO <span>/</span> DASHBOARD</div><div class="top-actions"><button type="button" id="install-btn" class="outline-btn install-button is-hidden">Instalar app</button><button type="button" class="theme-switch theme-switch-top" data-theme-toggle aria-label="Alternar tema"><span data-theme-symbol>☾</span><span data-theme-caption>Modo escuro</span></button><div class="top-conn"><span class="status-dot"></span><span id="conn-state">Conectando...</span></div><div class="user-profile"><span id="user-avatar" class="user-avatar">U</span><span id="user-name">Estudante</span></div><button type="button" id="logout-top-btn" class="outline-btn logout-button" data-signout aria-label="Sair da conta">Sair</button></div></header>
+    <header class="topbar"><button class="mobile-menu" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">☰</button><div class="breadcrumb" id="breadcrumb">INÍCIO <span>/</span> DASHBOARD</div><div class="top-actions"><button type="button" id="install-btn" class="outline-btn install-button is-hidden">Instalar app</button><button type="button" class="theme-switch theme-switch-top" data-theme-toggle aria-label="Alternar tema"><span class="theme-track" aria-hidden="true"><span class="theme-thumb"></span></span><span data-theme-caption>Modo escuro</span></button><div class="top-conn"><span class="status-dot"></span><span id="conn-state">Conectando...</span></div><div class="user-profile"><span id="user-avatar" class="user-avatar">U</span><span id="user-name">Estudante</span></div><button type="button" id="logout-top-btn" class="outline-btn logout-button" data-signout aria-label="Sair da conta">Sair</button></div></header>
     <aside id="update-notice" class="update-notice is-hidden" role="status"><span>Uma nova versão do portal está disponível.</span><button type="button" id="update-btn" class="primary-btn">Atualizar</button></aside>
     <main id="view" class="view" tabindex="-1"></main>
     <footer class="site-footer"><span>© 2026 • Portal Educacional</span><span>Prof. Bruno Michel Pera</span></footer>
@@ -58,6 +60,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <dialog id="submit-modal" class="modal"><form id="submit-form" method="dialog"><div class="modal-heading"><div><small>ENTREGA OFICIAL</small><h2>Enviar link do GitHub</h2></div><button class="icon-btn" type="button" id="modal-close" aria-label="Fechar">✕</button></div><p>Obrigatório: seu código, exercícios, capturas e README devem estar em um repositório GitHub.</p><label>Disciplina<select id="sub-course" required></select></label><label>Tipo de atividade<select id="sub-type" required><option value="semanal">Exercícios da semana</option><option value="pratica">Lista prática (até 2 pontos)</option><option value="projeto">Projeto da disciplina (0–10)</option></select></label><label id="week-wrap">Semana<select id="sub-week"></select></label><label id="sub-activity-wrap" class="is-hidden">Atividade publicada pelo professor<select id="sub-activity"></select></label><label>Link público do repositório GitHub<input type="url" id="sub-url" placeholder="https://github.com/seu-usuario/seu-projeto" required></label><label>Comentário ao professor<textarea id="sub-note" rows="3" placeholder="Descreva o que foi realizado e onde encontrar a atividade no repositório."></textarea></label><p id="form-message" class="form-message" role="alert"></p><div class="dialog-actions"><button type="button" class="outline-btn" id="cancel-submit">Cancelar</button><button type="submit" class="primary-btn" id="submit-btn"> Enviar atividade</button></div></form></dialog>
-<script type="module" src="app.js?v=20261116.6"></script>
+<script type="module" src="app.js?v=20261116.7"></script>
 </body>
 </html>

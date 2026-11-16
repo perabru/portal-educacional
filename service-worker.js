@@ -1,9 +1,9 @@
 // O shell é instalado como uma única versão. Dados pessoais ficam no Firebase.
-const VERSION='v6-20261116';
+const VERSION='v7-20261116-pixel';
 const SCOPE=new URL(self.registration.scope);
 const CACHE_PREFIX=`portal-educacional-${SCOPE.pathname}-`;
 const CACHE_NAME=CACHE_PREFIX+VERSION;
-const CORE=['./','./index.html','./styles.css','./app.js','./management.js','./notas.js','./curriculo.js','./curriculo.json','./favicon.svg','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+const CORE=['./','./index.html','./styles.css','./pixel.css','./pixel-ui.js','./enrollment.js','./icons/pixel.svg','./fonts/pixelify-regular.woff2','./fonts/pixelify-bold.woff2','./app.js','./management.js','./notas.js','./curriculo.js','./curriculo.json','./favicon.svg','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 const CORE_URLS=new Set(CORE.map(path=>new URL(path,SCOPE).href));
 const INDEX_URL=new URL('./index.html',SCOPE).href;
 

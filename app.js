@@ -1,6 +1,7 @@
-import { loadCurriculum } from './curriculo.js?v=20261116.6';
-import { createManagement } from './management.js?v=20261116.6';
-import {renderStudentGradeDashboard} from './notas.js?v=20261116.6';
+import { initPixelUI } from './pixel-ui.js?v=20261116.7';
+import { loadCurriculum } from './curriculo.js?v=20261116.7';
+import { createManagement } from './management.js?v=20261116.7';
+import {renderStudentGradeDashboard} from './notas.js?v=20261116.7';
 
 const FIREBASE_CONFIG = {
  apiKey:'AIzaSyA8wnEafMcts4vCesDTzf3dhB7Z8wliAsg', authDomain:'apptcc3j.firebaseapp.com',
@@ -100,10 +101,10 @@ function doneKey(id,n,i){return `portal-educacional-ex-${user?.uid||'anon'}-${id
 function doneCount(id){let n=0;const s=getSub(id); if(!s)return 0;for(const w of s.semanas.filter(w=>!w.sem_tema)){for(let i=0;i<weeklyExercises(s,w).length;i++)if(savedValue(doneKey(id,w.n,i))==='1')n++}return n}
 function progress(s){return Math.round(doneCount(s.id)/Math.max(1,s.semanas.filter(w=>!w.sem_tema).reduce((n,w)=>n+weeklyExercises(s,w).length,0))*100)}
 function schoolOf(s){return (s.instituicao||'UNIVAP').toUpperCase()==='MAXIMUS'?'MAXIMUS':'UNIVAP'}
-function courseSections(){const entries=visibleSubjects();return `<div class="course-grid">${entries.map(courseCard).join('')}</div>`}
+function courseSections(){const entries=visibleSubjects();if(!entries.length)return empty('Seu catálogo está vazio','Atualize escola, ano, turma e disciplinas no seu perfil.');return `<div class="course-grid">${entries.map(courseCard).join('')}</div>`}
 function maximusAppCard(s){if(!['maximus_tca','maximus_tcc'].includes(s.id))return '';return `<aside class="notice max-inic-card"><span>📱</span><div><strong>Aplicativo para TCA e TCC</strong><p>Use o Maximus INIC para acompanhar o grupo e escrever o trabalho. No celular, abra o link e escolha a opção de instalar o aplicativo no navegador.</p>${link(MAXIMUS_INIC_URL,'Abrir Maximus INIC','primary-btn')}</div></aside>`}
-function courseCard(s){const m=metaFor(s);return `<article class="course-card" style="--accent:${m.accent}"><div class="course-card-top"><span class="course-icon" aria-hidden="true">${m.emoji}</span><small>${esc(s.ano||'Disciplina')}</small></div><h3>${esc(s.nome)}</h3><p>${esc(s.descricao||'')}</p><div class="tag-list"><span class="badge">${courseCount(s)} semanas</span></div><div class="course-footer"><span>${progress(s)}% concluído</span><a href="#/course/${s.id}">Abrir disciplina</a></div></article>`}
-function renderHome(){const items=visibleSubjects();return `<section class="hero hero-simple"><div class="hero-copy"><div class="eyebrow">Portal Educacional</div><h1>Suas disciplinas</h1><p>Acesse materiais, envie atividades e acompanhe suas notas.</p><div class="hero-actions"><button class="primary-btn" data-go="courses">Disciplinas</button><button class="outline-btn" data-go="notes">Minhas notas</button></div></div></section><div class="stat-grid"><div class="stat"><span class="stat-icon">▦</span><div><strong>${items.length}</strong><small>Disciplinas</small></div></div><div class="stat"><span class="stat-icon">▤</span><div><strong>${items.reduce((n,c)=>n+c.semanas.length,0)}</strong><small>Semanas de aula</small></div></div></div><div class="section-heading"><h2>Disciplinas</h2></div>${courseSections()}`}
+function courseCard(s){const m=metaFor(s);return `<article class="course-card" style="--accent:${m.accent}"><div class="course-card-top"><span class="course-icon" aria-hidden="true">${m.emoji}</span><small>${esc(s.ano||'Disciplina')}</small></div><h3>${esc(s.nome)}</h3><p>${esc(s.descricao||'')}</p><div class="tag-list"><span class="badge">${courseCount(s)} ${courseCount(s)===1?'semana':'semanas'}</span></div><div class="course-footer"><span>${progress(s)}% concluído</span><a href="#/course/${s.id}">Abrir disciplina</a></div></article>`}
+function renderHome(){const items=visibleSubjects(),p=management?.profile();const classroom=!management?.owner()&&p?`<div class="enrollment-summary"><span class="profile-chip">${esc(p.instituicao==='MAXIMUS'?'Maximus':p.instituicao||'')}</span><span class="profile-chip">${esc(p.ano)}</span><span class="profile-chip">Turma ${esc(p.turma)}</span><button class="classroom-edit" data-go="profile">Editar cadastro</button></div>`:'';return `<section class="hero hero-simple"><div class="hero-copy"><div class="eyebrow">Portal Educacional</div><h1>Suas disciplinas</h1><p>Acesse materiais, envie atividades e acompanhe suas notas.</p>${classroom}<div class="hero-actions"><button class="primary-btn" data-go="courses">Disciplinas</button><button class="outline-btn" data-go="notes">Minhas notas</button></div></div></section><div class="stat-grid"><div class="stat"><span class="stat-icon">▦</span><div><strong>${items.length}</strong><small>Disciplinas</small></div></div><div class="stat"><span class="stat-icon">▤</span><div><strong>${items.reduce((n,c)=>n+c.semanas.length,0)}</strong><small>Semanas de aula</small></div></div></div><div class="section-heading"><h2>Disciplinas</h2></div>${courseSections()}`}
 function renderCourses(){return `${title({top:'DISCIPLINAS',h:'Disciplinas',p:'Selecione uma disciplina para consultar aulas, atividades e projetos.'})}${courseSections()}`}
 function renderCourse(id){const s=getSub(id);if(!s)return empty('Disciplina não encontrada','Confira o endereço e tente novamente.');const m=metaFor(getSub(id)||{id});return `<div class="course-banner"><span class="course-icon" style="background:${m.accent}23">${m.emoji}</span><div><div class="kicker">${esc(s.ano)}</div><h1>${esc(s.nome)}</h1><p>${esc(s.descricao)}</p></div></div><div class="page-actions"><button class="primary-btn" data-go="apostila/${id}">📚 Abrir apostila</button><button class="outline-btn" data-go="tasks/${id}">☑ Lista e projeto</button><button class="outline-btn" data-submit="${id}:semanal:1"> Enviar exercício</button></div>${maximusAppCard(s)}<div class="bim-tabs">${[0,1,2,3,4].map(b=>`<button data-bim="${b}" class="${selectedBim===b?'active':''}">${b===0?'Todas as semanas':b+'º bimestre'}</button>`).join('')}</div><div class="two-col"><section><div class="section-heading" style="margin-top:0"><h2>Trilha de aulas</h2><span class="badge blue">${s.semanas.length} semanas</span></div><div class="week-list">${s.semanas.filter(w=>!selectedBim||w.bimestre===selectedBim).map(w=>weekCard(s,w)).join('')}</div></section><aside class="aside-stack"><div class="panel"><div class="kicker">AVALIAÇÃO</div><h3>Atividades da disciplina</h3><p>Lista prática: até <strong>2,0 pontos</strong>. Projeto da disciplina: nota de <strong>0 a 10</strong>.</p><button class="primary-btn full" data-go="tasks/${id}">Ver enunciados </button></div><div class="panel"><h3>Material de apoio</h3><p>Apostila digital completa e plano original fornecido pelo professor.</p><button class="outline-btn full" data-go="apostila/${id}">Ler apostila</button><div style="margin-top:9px">${sourceLink(s)}<div class="archive-links">${originalLinks(s)}</div></div></div><div class="panel"><h3>Curso em vídeo</h3><p>Videoaulas e buscas temáticas relacionadas à disciplina.</p>${link(m.video,m.videoLabel)}</div><div class="panel"><h3>Meu progresso</h3><p>${doneCount(id)} de ${s.semanas.length*3} tarefas marcadas como estudadas neste navegador.</p><div style="height:7px;border-radius:7px;background:var(--border);overflow:hidden"><div style="width:${progress(s)}%;height:100%;background:var(--blue)"></div></div><small class="muted">O progresso é local; a entrega oficial ocorre pelo GitHub.</small></div></aside></div>`}
 function originalLinks(s){return (ORIGINALS[s.id]||[]).map(f=>link('materiais/planejamentos/'+encodeURIComponent(f),f.toLowerCase().endsWith('xlsm')?' Planilha Excel (XLSM)':f.includes('assinado')?' Planejamento assinado (PDF)':' Planejamento (PDF)')).join('')}
@@ -177,7 +178,7 @@ function isGitHubUrl(value){
 }
 async function sendSubmission(e){
  e.preventDefault();const message=$('#form-message');message.textContent='';
- if(!user||!db||!F||!management?.active()){message.textContent='Faça login com matrícula aprovada para enviar.';return}
+ if(!user||!db||!F||!management?.active()){message.textContent='Complete seu cadastro para enviar atividades.';return}
  const uid=user.uid,version=sessionVersion,github=$('#sub-url').value.trim(),comment=$('#sub-note').value.trim(),s=getSub($('#sub-course').value),typ=$('#sub-type').value,atividadeId=$('#sub-activity').value||'';
  if(!s||!visibleSubjects().some(x=>x.id===s.id)){message.textContent='Disciplina não autorizada para sua matrícula.';return}
  if(!['semanal','pratica','projeto'].includes(typ)){message.textContent='Selecione um tipo de atividade válido.';return}
@@ -238,7 +239,7 @@ async function handleAuthState(u){
  $('#login-screen').classList.add('is-hidden');$('#app-shell').classList.remove('is-hidden');
  await management.init(u);
  if(version!==sessionVersion||user?.uid!==u.uid)return;
- setConnection(management.hasError?.()?'Acesso restrito':(management.active()?'Conectado':'Matrícula pendente'));
+ setConnection(management.hasError?.()?'Acesso restrito':(management.active()?'Conectado':'Complete seu cadastro'));
  await render();
 }
 async function render(){
@@ -246,13 +247,15 @@ async function render(){
  const version=++renderVersion,uid=user.uid;
  const parts=(location.hash||'#/home').replace(/^#\/?/,'').split('/').filter(Boolean);
  currentPage=parts[0]||'home';
- $('#breadcrumb').innerHTML=`PORTAL EDUCACIONAL <span>/</span> ${esc(currentPage.toUpperCase())}`;
+ const pageNames={home:'Início',courses:'Disciplinas',course:'Disciplina',tasks:'Atividades',apostila:'Apostila',profile:'Meu cadastro',notes:'Minhas notas',teacher:'Administração',submissions:'Minhas entregas',guide:'Guia do GitHub',extras:'Cursos extras',materials:'Materiais',tools:'Ferramentas'};
+ $('#breadcrumb').innerHTML=`PORTAL EDUCACIONAL <span>/</span> ${esc(pageNames[currentPage]||'Página')}`;
+ setConnection(management.hasError?.()?'Acesso restrito':management.active()?'Conectado':'Complete seu cadastro');
  updateNav();const view=$('#view');
  document.body.classList.toggle('onboarding',management.hasError?.()||!management.active());
  if(management.hasError?.()||!management.active()){view.innerHTML=management.renderGate();return}
  if(!management.owner()&&currentPage==='teacher'){nav('home');return}
  if(!management.owner()&&['course','apostila','tasks'].includes(currentPage)&&parts[1]&&!visibleSubjects().some(x=>x.id===parts[1])){
-  view.innerHTML=empty('Sem matrícula nesta disciplina','Edite seu perfil para solicitar acesso a ela.');return;
+  view.innerHTML=empty('Esta disciplina não faz parte do seu cadastro','Confira escola, ano, turma e disciplinas em Meu cadastro.');return;
  }
  const pages={home:renderHome,courses:renderCourses,tools:renderTools,materials:renderMaterials,extras:renderExtras,guide:renderGuide,profile:()=>management.renderProfile()};
  if(pages[currentPage])view.innerHTML=pages[currentPage]();
@@ -269,6 +272,7 @@ async function render(){
  if(version===renderVersion&&user?.uid===uid)window.scrollTo({top:0,behavior:'instant'});
 }
 function bootUI(){
+ initPixelUI();
  document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));
  $('#menu-toggle').addEventListener('click',()=>{
   const open=$('#sidebar').classList.toggle('open');$('#menu-toggle').setAttribute('aria-expanded',String(open));

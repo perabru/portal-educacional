@@ -27,6 +27,8 @@ jobs:
         run: |
           node --check app.js
           node --check management.js
+          node --check enrollment.js
+          node --check pixel-ui.js
           node --check notas.js
           node --check curriculo.js
           node --check service-worker.js
@@ -52,8 +54,9 @@ jobs:
       - name: Preparar conteúdo público
         run: |
           mkdir -p _site
-          cp index.html app.js management.js notas.js curriculo.js curriculo.json styles.css favicon.svg manifest.webmanifest service-worker.js .nojekyll _site/
-          cp -r icons materiais _site/
+          cp index.html app.js management.js enrollment.js pixel-ui.js pixel.css notas.js curriculo.js curriculo.json styles.css favicon.svg manifest.webmanifest service-worker.js .nojekyll _site/
+          cp -r icons fonts materiais _site/
+          cp UI-CREDITS.md _site/
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
       - name: Enviar conteúdo

@@ -7,16 +7,17 @@ O portal usa o projeto **`apptcc3j`**, o Realtime Database **`apptcc3j-default-r
 1. No [Firebase Console](https://console.firebase.google.com/project/apptcc3j), habilite **Authentication → Sign-in method → Google**.
 2. Em **Authentication → Settings → Authorized domains**, autorize `perabru.github.io`. Para desenvolvimento, autorize `localhost`.
 3. Em **Realtime Database → Regras**, copie as regras atuais para backup. Dentro de `rules`, substitua **somente** o nó `portalEducacionalV1` pelo nó correspondente de [firebase.rules.json](firebase.rules.json). Preserve os demais nós do banco e publique.
-4. O aluno entra com Google, informa nome, ano, turma e disciplinas e envia o cadastro. A matrícula fica pendente.
-5. Entre com **`brunomichel00@gmail.com`** e aprove a matrícula no painel administrador. O aluno pode consultar novamente sua aprovação. Alterar nome, ano, turma ou disciplinas exige nova aprovação.
+4. O aluno entra com Google, informa escola, nome, ano, turma e disciplinas e salva o cadastro. O acesso é liberado automaticamente para sua seleção.
+5. Cadastros antigos pendentes são ativados automaticamente ao entrar quando as disciplinas correspondem à escola, ao ano e à turma informados. Se os dados antigos forem incompatíveis, o aluno os corrige no formulário. Não há aprovação manual de matrícula.
+6. A conta **`brunomichel00@gmail.com`** administra alunos, disciplinas, atividades e avaliações. Remover um aluno suspende o acesso; ele não pode reativar a própria matrícula.
 
-As disciplinas novas aparecem também para alunos que ainda estão se cadastrando. Os conteúdos de atividades, as entregas e as notas continuam sujeitos à aprovação e às permissões de cada conta. Remover uma matrícula suspende o acesso e preserva o histórico.
+As disciplinas são filtradas pela escola, pelo ano e, quando houver restrição, pela turma. O administrador define a escola e o ano da disciplina; o mapa opcional `turmas` usa o formato `{ "2IA": true, "2IB": true }`, vazio ou ausente para todas as turmas do ano. Para mais de um ano, use `1º e 2º anos` ou `Todos os anos`. Alterações de matrícula válidas são aplicadas imediatamente. Notas continuam exclusivas da própria conta e somente o professor pode publicá-las; a revisão docente da correção com Gemini permanece.
 
 ### Corrigir “Permission denied”
 
 As regras precisam autorizar **`portalEducacionalV1/usuarios/UID`**. Regras apenas em `usuarios/UID`, ou regras do Firestore, não autorizam este caminho do Realtime Database.
 
-O próprio aluno autenticado pode ler e criar seu cadastro pendente. Somente o administrador pode aprovar matrículas e publicar notas. Não habilite leitura ou escrita pública na raiz para contornar um erro de acesso.
+O próprio aluno com e-mail verificado pode ler, criar e atualizar seu cadastro ativo. As regras validam a instituição, o ano e as disciplinas do catálogo; uma conta removida não pode se reativar. Somente o administrador pode publicar notas. Não habilite leitura ou escrita pública na raiz para contornar um erro de acesso.
 
 **Publicar os arquivos no GitHub Pages não publica regras no Firebase.** O arquivo `firebase.json` declara o database para uso do Firebase CLI, mas o comando `firebase deploy --only database` substitui o conjunto completo de regras: use-o somente com um arquivo que já contenha a mesclagem das regras atuais do servidor. Para uma aplicação compartilhando o projeto, prefira a alteração pontual pelo Console descrita acima.
 
@@ -54,7 +55,7 @@ node tests/testar-backend.cjs
 
 `tests/testar-backend.cjs` verifica autorização, limites, erros dos serviços e persistência de sugestões com serviços controlados. Não usa credenciais nem publica notas.
 
-`tests/testar-regras.cjs` usa o **Firebase Database Emulator** na porta 9000 e o projeto fictício `demo-portal-educacional`. Instale `firebase-tools`, `firebase` e `@firebase/rules-unit-testing` no ambiente de desenvolvimento, inicie o emulador com as regras locais e execute o teste. Ele verifica cadastro pendente, aprovação, entregas, disciplinas novas, isolamento de notas e suspensão de acesso, sem acessar produção.
+`tests/testar-regras.cjs` usa o **Firebase Database Emulator** na porta 9000 e o projeto fictício `demo-portal-educacional`. Instale `firebase-tools`, `firebase` e `@firebase/rules-unit-testing` no ambiente de desenvolvimento, inicie o emulador com as regras locais e execute o teste. Ele verifica cadastro ativo automático, migração de cadastros antigos, filtros de escola/ano/turma, entregas, disciplinas novas, isolamento de notas e suspensão de acesso, sem acessar produção.
 
 ## PWA
 
