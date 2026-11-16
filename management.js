@@ -50,6 +50,7 @@ export function createManagement(api){
   if(!nome||!turma||!yrOptions.includes(ano)||!['UNIVAP','MAXIMUS'].includes(instituicao)||Object.keys(materias).some(id=>(byId(id)?.instituicao||'UNIVAP')!==instituicao)){el('profile-msg').textContent='Informe nome, ano e turma válidos.';return}
   const oldKeys=Object.keys(profile?.materias||{}).sort().join(','),newKeys=Object.keys(materias).sort().join(',');
   const changedStudy=profile?.status==='ativo'&&(profile.nome!==nome||profile.ano!==ano||profile.turma!==turma||profile.instituicao!==instituicao||oldKeys!==newKeys);
+  if(profile?.status==='ativo'&&!changedStudy){api.toast('Cadastro já atualizado.');return;}
   const data={nome,email:u.email,ano,turma,instituicao,materias,status:changedStudy?'pendente':(profile?.status||'pendente'),criadoEm:profile?.criadoEm||Date.now(),atualizadoEm:Date.now()};
   try{await F.set(F.ref(db,path('usuarios/'+u.uid)),data);profile=data;api.toast(changedStudy?'Perfil atualizado. Aguardando nova aprovação.':'Perfil salvo.');await api.render()}catch(e){el('profile-msg').textContent=e.message;}
  }
