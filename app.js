@@ -1,6 +1,6 @@
-import { loadCurriculum } from './curriculo.js';
-import { createManagement } from './management.js';
-import {renderStudentGradeDashboard} from './notas.js';
+import { loadCurriculum } from './curriculo.js?v=20261116.6';
+import { createManagement } from './management.js?v=20261116.6';
+import {renderStudentGradeDashboard} from './notas.js?v=20261116.6';
 
 const FIREBASE_CONFIG = {
  apiKey:'AIzaSyA8wnEafMcts4vCesDTzf3dhB7Z8wliAsg', authDomain:'apptcc3j.firebaseapp.com',
