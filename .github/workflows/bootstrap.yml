@@ -49,6 +49,7 @@ jobs:
           node tests/testar-curriculo.mjs
           node tests/testar-app.mjs
           node tests/testar-interface.mjs
+          node tests/testar-exercicios.mjs
           node tests/testar-backend.cjs
           node tests/test-pwa.mjs
       - name: Preparar conteúdo público
