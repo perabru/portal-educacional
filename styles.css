@@ -170,3 +170,188 @@ body[data-theme="light"]{--bg:#f5f7fb;--panel:#fff;--panel2:#eef3fa;--border:#db
 .theme-switch:focus-visible,.primary-btn:focus-visible,.outline-btn:focus-visible,.pill-link:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 @media(max-width:650px){.theme-switch-top [data-theme-caption]{display:none}.theme-switch-top{min-width:42px;justify-content:center;padding:8px}.top-actions{gap:8px}.user-profile{padding-left:8px}.theme-switch-login{right:14px;top:12px}.login-card{padding:68px 23px 28px}.course-grid{grid-template-columns:1fr}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero.hero-simple{padding:24px}}
 @media(prefers-reduced-motion:reduce){.primary-btn,.outline-btn,.small-btn,.pill-link,.theme-switch,.course-card{transition:none!important;transform:none!important}}
+
+
+/* Cadastro responsivo: o menu oculto não deve reservar uma coluna de 258px. */
+body.onboarding .shell{
+  display:block!important;
+  grid-template-columns:none!important;
+  width:100%;
+  min-width:0;
+  min-height:100dvh;
+}
+body.onboarding .sidebar,body.onboarding .site-footer{display:none!important}
+body.onboarding .main-column{
+  margin:0;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:100dvh;
+}
+body.onboarding .topbar{
+  width:100%;
+  min-width:0;
+  min-height:72px;
+  height:auto;
+  padding:12px clamp(16px,3vw,38px);
+  justify-content:flex-end;
+}
+body.onboarding .mobile-menu,
+body.onboarding .topbar .breadcrumb{display:none!important}
+body.onboarding .topbar .top-actions{
+  margin:0;
+  min-width:0;
+  max-width:100%;
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:clamp(8px,2vw,20px);
+}
+body.onboarding .topbar .user-profile{
+  min-width:0;
+  max-width:min(280px,100%);
+}
+body.onboarding #user-name{
+  min-width:0;
+  max-width:170px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body.onboarding #view{
+  margin:0 auto;
+  width:100%;
+  min-width:0;
+  max-width:980px;
+  padding:clamp(16px,3vw,32px);
+  box-sizing:border-box;
+}
+body.onboarding .onboard-wrap{
+  margin:8px auto 40px;
+  padding:0;
+  width:100%;
+  min-width:0;
+  max-width:860px;
+}
+body.onboarding .onboard-card{
+  width:100%;
+  min-width:0;
+  padding:clamp(20px,3.5vw,34px);
+  border-radius:18px;
+}
+body.onboarding .onboard-card h1{
+  max-width:100%;
+  overflow-wrap:break-word;
+  font-size:clamp(23px,3.2vw,34px);
+}
+body.onboarding .managed-form,
+body.onboarding .managed-form fieldset{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+body.onboarding .managed-form label{min-width:0}
+body.onboarding .form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+body.onboarding .checks-grid{
+  display:grid;
+  width:100%;
+  min-width:0;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+  gap:12px;
+}
+body.onboarding .checks-grid .course-check{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start;
+  gap:12px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:68px;
+  box-sizing:border-box;
+  padding:14px;
+  line-height:1.45;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel2);
+}
+body.onboarding .course-check input[type="checkbox"]{
+  appearance:auto;
+  margin:0;
+  padding:0;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+  max-height:18px;
+  flex:0 0 18px;
+  accent-color:var(--blue);
+}
+body.onboarding .course-check span{
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  width:auto;
+  overflow-wrap:break-word;
+  word-break:normal;
+  white-space:normal;
+}
+body.onboarding .course-check b{
+  font-size:14px;
+  font-weight:700;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:break-word;
+}
+body.onboarding .course-check small{
+  font-size:12px;
+  line-height:1.4;
+  color:var(--muted);
+}
+body.onboarding .course-check.course-locked{opacity:.5}
+body.onboarding .managed-form input:not([type="checkbox"]),
+body.onboarding .managed-form select{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+body.onboarding .onboard-details{margin:18px 0}
+body.onboarding .onboard-details summary{
+  display:inline-flex;
+  align-items:center;
+  list-style:none;
+  cursor:pointer;
+  user-select:none;
+  margin-bottom:6px;
+}
+body.onboarding .onboard-details summary::-webkit-details-marker{display:none}
+body.onboarding .onboard-details[open] summary{margin-bottom:16px}
+@media(max-width:760px){
+  body.onboarding .form-grid,
+  body.onboarding .checks-grid{grid-template-columns:minmax(0,1fr)}
+  body.onboarding .onboard-card{padding:clamp(16px,5vw,25px)}
+  body.onboarding .topbar{min-height:62px;padding:10px 16px}
+  body.onboarding .topbar .top-conn{display:none!important}
+  body.onboarding .topbar .theme-switch-top{padding:9px 12px}
+  body.onboarding #view{padding:16px}
+}
+@media(max-width:420px){
+  body.onboarding .topbar .top-actions{
+    justify-content:space-between;
+    width:100%;
+    flex-wrap:nowrap;
+    gap:8px;
+  }
+  body.onboarding .topbar .theme-switch-top{flex:0 0 44px}
+  body.onboarding .topbar .user-profile{max-width:calc(100% - 56px)}
+  body.onboarding .course-check{padding:12px;min-height:60px}
+  body.onboarding .course-check b{font-size:13px}
+}
