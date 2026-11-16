@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "portalEducacionalV1": {
+      ".read": false,
+      ".write": false,
+      "usuarios": {
+        ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
+        "$uid": {
+          ".read": "auth != null && (auth.uid == $uid || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
+          ".write": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth.uid == $uid && newData.exists() && newData.child('email').val() == auth.token.email && (newData.child('status').val() == (data.exists() ? data.child('status').val() : 'pendente') || (data.child('status').val() == 'ativo' && newData.child('status').val() == 'pendente')) && newData.child('nome').isString() && newData.child('turma').isString() && newData.child('ano').isString() && newData.child('materias').exists() && (newData.child('instituicao').val() == 'UNIVAP' || newData.child('instituicao').val() == 'MAXIMUS')))",
+          ".validate": "newData.hasChildren(['nome','email','ano','turma','materias','status','criadoEm','atualizadoEm','instituicao']) && newData.child('nome').isString() && newData.child('nome').val().length <= 100 && newData.child('turma').isString() && newData.child('turma').val().length <= 35 && newData.child('email').isString() && newData.child('status').isString() && (newData.child('instituicao').val() == 'UNIVAP' || newData.child('instituicao').val() == 'MAXIMUS') && !newData.child('admin').exists() && !newData.child('role').exists()"
+        }
+      },
+      "convites": {
+        ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
+        ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
+      },
+      "disciplinas": {
+        ".read": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo')",
+        ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
+      },
+      "atividades": {
+        ".read": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo')",
+        ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
+      },
+      "submissoes": {
+        ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
+        "$uid": {
+          ".read": "auth != null && (auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo' || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
+          "$sid": {
+            ".write": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo' && !data.exists() && newData.exists() && newData.child('email').val() == auth.token.email && newData.child('github').isString() && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/materias/' + newData.child('disciplina').val()).val() == true && (newData.child('tipo').val() == 'semanal' || newData.child('tipo').val() == 'pratica' || newData.child('tipo').val() == 'projeto')))",
+            ".validate": "newData.hasChildren(['disciplina','tipo','github','email','nome','criadoEm']) && newData.child('github').isString() && newData.child('github').val().length <= 500 && newData.child('nome').isString() && newData.child('email').isString() && newData.child('comentario').isString() && newData.child('comentario').val().length <= 750"
+          }
+        }
+      },
+      "iaSugestoes": {
+        ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
+        ".write": false
+      },
+      "avaliacoes": {
+        ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
+        "$uid": {
+          ".read": "auth != null && ((auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo') || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
+          ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
+        }
+      }
+    }
+  }
+}
