@@ -1,5 +1,5 @@
 // O shell é instalado como uma única versão. Dados pessoais ficam no Firebase.
-const VERSION='v8-20261116-leitura';
+const VERSION='v9-20261116-pixel-sutil';
 const SCOPE=new URL(self.registration.scope);
 const CACHE_PREFIX=`portal-educacional-${SCOPE.pathname}-`;
 const CACHE_NAME=CACHE_PREFIX+VERSION;

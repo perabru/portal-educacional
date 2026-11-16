@@ -1,7 +1,7 @@
-import { initPixelUI } from './pixel-ui.js?v=20261116.8';
-import { loadCurriculum } from './curriculo.js?v=20261116.8';
-import { createManagement } from './management.js?v=20261116.8';
-import {renderStudentGradeDashboard} from './notas.js?v=20261116.8';
+import { initPixelUI } from './pixel-ui.js?v=20261116.9';
+import { loadCurriculum } from './curriculo.js?v=20261116.9';
+import { createManagement } from './management.js?v=20261116.9';
+import {renderStudentGradeDashboard} from './notas.js?v=20261116.9';
 
 const FIREBASE_CONFIG = {
  apiKey:'AIzaSyA8wnEafMcts4vCesDTzf3dhB7Z8wliAsg', authDomain:'apptcc3j.firebaseapp.com',
