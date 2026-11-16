@@ -37,3 +37,15 @@ A chave fornecida na conversa não é incluída no repositório. Para testar a c
 - A IA não executa código nem verifica toda a funcionalidade; notas oficiais exigem conferência docente.
 - O portal é uma PWA, mas instalação automática em todos os celulares não é permitida; o usuário escolhe via navegador.
 - Alunos acessam apenas entregas e notas da própria conta. As regras do database são independentes do site estático.
+
+## Corrigir "Permission denied" no login de alunos
+
+A versão publicada do Portal Educacional usa o Firebase `apptcc3j`, Realtime Database `apptcc3j-default-rtdb` e acessa os perfis em **`portalEducacionalV1/usuarios/UID`**. Regras antigas em `usuarios` sem o prefixo **não autorizam** este caminho.
+
+1. No [Firebase Console](https://console.firebase.google.com/project/apptcc3j), vá a **Realtime Database → Regras** (não Firestore).
+2. Faça backup das regras atuais. Na raiz `rules`, **mescle** o nó `portalEducacionalV1` inteiro do arquivo [firebase.rules.json](firebase.rules.json), sem apagar as permissões existentes de outros projetos.
+3. Clique em **Publicar**. Confirme que o Google está habilitado em Authentication e que `perabru.github.io` está nos domínios autorizados.
+4. Entre com um aluno: ele deverá conseguir preencher **ano, turma e disciplinas**, com estado **pendente**. O administrador aprova no painel, e o aluno volta para acessar seus dados.
+5. Se ainda falhar, use o simulador de regras do Realtime Database para testar a leitura em `/portalEducacionalV1/usuarios/UID` com `auth.uid` igual ao UID dessa conta.
+
+**Importante:** GitHub Pages publica HTML/JS/CSS. Alterar `firebase.rules.json` no repositório **não** altera as regras do Firebase automaticamente. Nunca use `".read": true` ou `".write": true` na raiz para contornar este erro.
