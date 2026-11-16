@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Portal Educacional",
   "short_name": "Portal Educacional",
-  "description": "Portal Educacional independente para disciplinas UNIVAP e Maximus.",
+  "description": "Aulas, atividades, materiais e notas do Portal Educacional.",
   "lang": "pt-BR",
   "start_url": "./?utm_source=pwa",
   "scope": "./",
