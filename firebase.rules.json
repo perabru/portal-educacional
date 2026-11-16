@@ -7,8 +7,13 @@
         ".read": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true",
         "$uid": {
           ".read": "auth != null && (auth.uid == $uid || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
-          ".write": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth.uid == $uid && newData.exists() && newData.child('email').val() == auth.token.email && (data.child('status').val() != 'removido' && newData.child('status').val() == 'pendente') && newData.child('nome').isString() && newData.child('turma').isString() && newData.child('ano').isString() && newData.child('materias').exists() && (newData.child('instituicao').val() == 'UNIVAP' || newData.child('instituicao').val() == 'MAXIMUS')))",
-          ".validate": "newData.hasChildren(['nome','email','ano','turma','materias','status','criadoEm','atualizadoEm','instituicao']) && newData.child('nome').isString() && newData.child('nome').val().length <= 100 && newData.child('turma').isString() && newData.child('turma').val().length <= 35 && newData.child('email').isString() && newData.child('status').isString() && (newData.child('instituicao').val() == 'UNIVAP' || newData.child('instituicao').val() == 'MAXIMUS') && !newData.child('admin').exists() && !newData.child('role').exists()"
+          ".write": "(auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth != null && auth.token.email_verified == true && auth.uid == $uid && newData.exists() && data.child('status').val() != 'removido' && newData.child('email').val() == auth.token.email && newData.child('status').val() == 'pendente' && (!data.exists() || newData.child('criadoEm').val() == data.child('criadoEm').val()))",
+          ".validate": "(auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (newData.hasChildren(['nome','email','ano','turma','materias','status','criadoEm','atualizadoEm','instituicao']) && newData.child('nome').isString() && newData.child('nome').val().length >= 3 && newData.child('nome').val().length <= 100 && newData.child('turma').isString() && newData.child('turma').val().length >= 1 && newData.child('turma').val().length <= 35 && newData.child('email').isString() && newData.child('ano').isString() && (newData.child('ano').val() == '1º ano' || newData.child('ano').val() == '2º ano' || newData.child('ano').val() == '3º ano' || newData.child('ano').val() == 'Outros') && (newData.child('instituicao').val() == 'UNIVAP' || newData.child('instituicao').val() == 'MAXIMUS') && newData.child('materias').hasChildren() && newData.child('criadoEm').isNumber() && newData.child('atualizadoEm').isNumber() && !newData.child('admin').exists() && !newData.child('role').exists())",
+          "materias": {
+            "$disciplina": {
+              ".validate": "(auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || newData.val() == true"
+            }
+          }
         }
       },
       "convites": {
@@ -16,7 +21,7 @@
         ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
       },
       "disciplinas": {
-        ".read": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo')",
+        ".read": "auth != null && auth.token.email_verified == true",
         ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
       },
       "atividades": {
@@ -28,8 +33,8 @@
         "$uid": {
           ".read": "auth != null && (auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo' || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
           "$sid": {
-            ".write": "auth != null && ((auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo' && !data.exists() && newData.exists() && newData.child('email').val() == auth.token.email && newData.child('github').isString() && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/materias/' + newData.child('disciplina').val()).val() == true && (newData.child('tipo').val() == 'semanal' || newData.child('tipo').val() == 'pratica' || newData.child('tipo').val() == 'projeto')))",
-            ".validate": "newData.hasChildren(['disciplina','tipo','github','email','nome','criadoEm']) && newData.child('github').isString() && newData.child('github').val().length <= 500 && newData.child('nome').isString() && newData.child('email').isString() && newData.child('comentario').isString() && newData.child('comentario').val().length <= 750"
+            ".write": "(auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (auth != null && auth.token.email_verified == true && auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo' && !data.exists() && newData.exists() && newData.child('email').val() == auth.token.email && newData.child('nome').val() == root.child('portalEducacionalV1/usuarios/' + auth.uid + '/nome').val() && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/materias/' + newData.child('disciplina').val()).val() == true && root.child('portalEducacionalV1/disciplinas/' + newData.child('disciplina').val() + '/ativo').val() != false && (!newData.child('atividadeId').exists() || newData.child('atividadeId').val() == '' || (root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).exists() && root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).child('publicada').val() != false && root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).child('ativo').val() != false && root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).child('disciplina').val() == newData.child('disciplina').val() && root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).child('tipo').val() == newData.child('tipo').val())))",
+            ".validate": "(auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true) || (newData.hasChildren(['disciplina','tipo','github','email','nome','criadoEm','comentario']) && newData.child('disciplina').isString() && (newData.child('tipo').val() == 'semanal' || newData.child('tipo').val() == 'pratica' || newData.child('tipo').val() == 'projeto') && newData.child('github').isString() && newData.child('github').val().matches(/^https:\\/\\/((www\\.)?github\\.com\\/[A-Za-z0-9-]+\\/[A-Za-z0-9_.-]+|[A-Za-z0-9-]+\\.github\\.io\\/[A-Za-z0-9_.-]+)([\\/?#].*)?$/i) && newData.child('github').val().length <= 500 && newData.child('nome').isString() && newData.child('email').isString() && newData.child('criadoEm').isNumber() && newData.child('comentario').isString() && newData.child('comentario').val().length <= 750 && (!newData.child('atividadeTitulo').exists() || (newData.child('atividadeTitulo').isString() && newData.child('atividadeTitulo').val().length <= 120)) && (!newData.child('notaMax').exists() || (newData.child('notaMax').isNumber() && newData.child('notaMax').val() > 0 && newData.child('notaMax').val() <= 10 && ((newData.child('atividadeId').isString() && newData.child('atividadeId').val() != '' && newData.child('notaMax').val() == root.child('portalEducacionalV1/atividades/' + newData.child('atividadeId').val()).child('notaMax').val()) || ((!newData.child('atividadeId').exists() || newData.child('atividadeId').val() == '') && ((newData.child('tipo').val() == 'pratica' && newData.child('notaMax').val() == 2) || (newData.child('tipo').val() != 'pratica' && newData.child('notaMax').val() == 10)))))))"
           }
         }
       },
@@ -43,6 +48,10 @@
           ".read": "auth != null && ((auth.uid == $uid && root.child('portalEducacionalV1/usuarios/' + auth.uid + '/status').val() == 'ativo') || (auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true))",
           ".write": "auth != null && auth.token.email == 'brunomichel00@gmail.com' && auth.token.email_verified == true"
         }
+      },
+      "iaAnalisesEmCurso": {
+        ".read": false,
+        ".write": false
       }
     }
   }

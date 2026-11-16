@@ -1,25 +1,38 @@
 # Portal Educacional
 
-Projeto **independente** para UNIVAP e Maximus, preparado para um repositório exclusivo `perabru/portal-educacional`.
+Aulas por semana, materiais, listas práticas de até 2 pontos e projetos de 0 a 10. Aplicativo independente, publicado em https://perabru.github.io/portal-educacional/.
 
-## O que está separado
-- **UNIVAP:** sete disciplinas dos planejamentos técnicos originais; **a UNIVAP não possui disciplina TCC neste portal**. Não utiliza o aplicativo Maximus INIC.
-- **Maximus:** **TCA e TCC**, com trilhas de estudo e indicação para abrir/instalar **Maximus INIC apenas nas páginas dessas duas matérias**.
-- Login Google e cadastro com **instituição, ano, turma e disciplinas**, sujeitos à aprovação do administrador.
-- Administração `brunomichel00@gmail.com`, atividades, entregas GitHub, dashboard do aluno, notas e correção assistida por Gemini com revisão docente.
-- PWA instalável pelo menu do navegador, **sem banner de instalação em todas as páginas**.
-- Firebase RTDB separado em `portalEducacionalV1` (não altera o banco do Maximus INIC).
+- Login Google; matrícula com ano, turma e disciplinas, aprovada pelo professor.
+- Administração: `brunomichel00@gmail.com`, com e-mail verificado.
+- Cadastro de disciplinas, edição de semanas, atividades, aprovação e suspensão de alunos.
+- Painel de entregas com filtros, exportação CSV, notas e comentários do professor.
+- Painel do aluno com listas, projetos e histórico de avaliações.
+- Modos claro e escuro, instalação pelo navegador e botão **Sair** em todas as telas da conta.
+- Banco Firebase `apptcc3j`, com dados isolados em `portalEducacionalV1`.
 
-## Como publicar
-Siga [PUBLICAR-GITHUB.md](PUBLICAR-GITHUB.md) para criar um novo repositório e ativar o GitHub Pages por GitHub Actions.
+## Publicação
+
+O GitHub Actions valida o código, executa os testes e publica a branch `main` no GitHub Pages. Somente arquivos do site e materiais são incluídos no conteúdo público. Regras, testes e funções permanecem no repositório.
 
 ## Firebase e Gemini
-Acesse [SETUP-FIREBASE.md](SETUP-FIREBASE.md). A chave do Gemini nunca deve ser enviada ao GitHub nem ao navegador. O botão Gemini exige Cloud Functions implantada com secret configurado.
 
-## Testes
-- `node --check app.js`, `node --check management.js` e `node --check functions/index.js`.
-- `python -m http.server 8080` para testar a interface com login (depois de autorizar localhost no Firebase).
-- `node tests/testar-gemini.mjs` com a variável de ambiente `GEMINI_API_KEY` configurada permite um teste real da credencial sem salvá-la no projeto.
+Consulte [SETUP-FIREBASE.md](SETUP-FIREBASE.md). A publicação do site não publica as regras nem o backend. Para ativar o banco, mescle apenas o nó `portalEducacionalV1` nas regras existentes, preservando outros aplicativos.
 
-## Privacidade
-PDFs, JSON e arquivos hospedados no Pages são **públicos**. Notas, matrículas e sugestões de IA devem existir apenas no Firebase com regras de acesso adequadas. A IA emite **proposta**, nunca nota final automática sem revisão do professor.
+A função `corrigirEntregaGemini` exige implantação no Firebase e uma chave privada no Secret Manager. O professor confere a sugestão e publica a nota. Credenciais Gemini não são incluídas no navegador nem no repositório.
+
+## Verificação
+
+```sh
+node tests/testar-app.mjs
+node tests/testar-interface.mjs
+node tests/testar-backend.cjs
+node tests/test-pwa.mjs
+```
+
+As regras também possuem teste de integração em `tests/testar-regras.cjs`, executado apenas com Firebase Database Emulator. Os testes não usam dados reais dos alunos.
+
+## Instalação e atualização
+
+Em navegadores compatíveis, use **Instalar app**. No iPhone/iPad, abra no Safari e escolha **Compartilhar → Adicionar à Tela de Início**. A instalação depende da escolha de cada usuário.
+
+Uma atualização disponível mostra **Atualizar**. Ao migrar de uma versão antiga, feche todas as telas do portal e abra novamente. O cache é limitado a este aplicativo; links para Maximus INIC abrem o aplicativo separado.

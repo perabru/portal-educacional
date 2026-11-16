@@ -355,3 +355,28 @@ body.onboarding .onboard-details[open] summary{margin-bottom:16px}
   body.onboarding .course-check{padding:12px;min-height:60px}
   body.onboarding .course-check b{font-size:13px}
 }
+
+/* Controles de conta acessíveis em todas as telas, inclusive matrícula. */
+.topbar .top-actions{gap:12px;min-width:0}
+.logout-button{white-space:nowrap;flex-shrink:0;min-height:44px;padding:9px 15px}
+.install-button{white-space:nowrap;min-height:44px;padding:9px 12px}
+.update-notice{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel2);flex-wrap:wrap}
+body.onboarding .topbar .top-actions{width:100%;justify-content:flex-end}
+body.onboarding .topbar .user-profile{margin-right:auto;min-width:0;max-width:none}
+body.onboarding .topbar .logout-button{flex:0 0 auto}
+body.onboarding .topbar #menu-toggle{display:none}
+@media(max-width:760px){
+ .topbar{height:auto;min-height:72px;flex-wrap:wrap;padding:10px 16px;gap:8px}
+ .topbar .top-actions{gap:8px;flex:1;justify-content:flex-end}
+ .topbar .top-conn{display:none}
+ .topbar .theme-switch-top{min-height:44px;padding:8px 10px;flex-shrink:0}
+ .topbar .user-profile{padding:0;border:0;max-width:36px}
+ .topbar .user-profile #user-name{display:none}
+ body.onboarding .topbar .user-profile{max-width:36px;order:-1}
+ body.onboarding .topbar .theme-switch-top{flex:0 0 auto}
+ .topbar .install-button{font-size:12px;padding:8px}
+ .topbar .logout-button{padding:8px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}

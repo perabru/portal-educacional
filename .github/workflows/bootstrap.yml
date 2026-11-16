@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -17,91 +17,38 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Obter repositório independente
+      - name: Obter código
         uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      - name: Obter materiais originais para migração inicial
-        if: ${{ hashFiles('index.html') == '' }}
-        uses: actions/checkout@v4
-        with:
-          repository: perabru/maximus-inic
-          ref: main
-          path: .portal-source
-          sparse-checkout: |
-            portal-univap
-          sparse-checkout-cone-mode: false
-      - name: Montar Portal Educacional independente
-        if: ${{ hashFiles('index.html') == '' }}
-        run: |
-          python -m pip install --disable-pip-version-check pillow
-          cp -a .portal-source/portal-univap/. .
-          python - <<'PY'
-          import base64,lzma,json
-          from pathlib import Path
-          source=Path('tools/portal_build_bundle.b64').read_text(encoding='utf8').strip()
-          scripts=lzma.decompress(base64.b64decode(source)).decode('utf8').split(chr(10)+'# ==== FINALIZE ===='+chr(10))
-          assert len(scripts)==2,'Pacote de transformação inválido'
-          for i,code in enumerate(scripts):
-              code=code.replace("p=Path('/mnt/data/work_portal/portal-educacional')","p=Path.cwd()")
-              exec(compile(code,f'construir_portal_{i}.py','exec'),{'__name__':'__main__'})
-          Path('.github/workflows/pages.yml').unlink(missing_ok=True)
-          app=Path('app.js').read_text(encoding='utf8')
-          app=app.replace('<p>${subjects.length} disciplinas,','<p>${visibleSubjects().length} disciplinas,')
-          app=app.replace('subjects.filter(s=>ORIGINALS[s.id])','visibleSubjects().filter(s=>ORIGINALS[s.id])')
-          app=app.replace("if(id==='maximus_tcc')return [['Sistema funcional e demonstração',4],['Documento conforme o manual da instituição',3],['Documentação e repositório',2],['Apresentação e defesa',1]];","if(id==='maximus_tca')return [['Problema de pesquisa e justificativa',2],['Objetivos e metodologia',3],['Planejamento e evidências',3],['Referências e documentação',2]];if(id==='maximus_tcc')return [['Pesquisa e metodologia',3],['Resultados e evidências',3],['Documentação e referências',2],['Apresentação e defesa',2]];")
-          Path('app.js').write_text(app,encoding='utf8')
-          js=Path('functions/index.js').read_text(encoding='utf8')
-          js=js.replace("tcc:'TCC: sistema funcional, documentação, monografia segundo manual UNIVAP, manual do usuário, testes e defesa.'","maximus_tca:'TCA Maximus: tema, questão de pesquisa, objetivos, metodologia, evidências, cronograma e acompanhamento no Maximus INIC.',\n maximus_tcc:'TCC Maximus: problema, objetivos, pesquisa, metodologia, resultados, documentação e apresentação.'")
-          Path('functions/index.js').write_text(js,encoding='utf8')
-          style=Path('styles.css')
-          style.write_text(style.read_text(encoding='utf8')+'''
-          .school-area{margin:26px 0 34px;}
-          .school-area>.section-heading{margin:0 0 16px;border-bottom:1px solid var(--border);padding-bottom:14px;}
-          .max-inic-card{border-color:#866cc1;}
-          .max-inic-card .primary-btn{display:inline-flex;margin:9px 12px 8px 0;padding:11px 18px;}
-          .max-inic-card small{display:block;font-size:12px;color:var(--muted);margin-top:7px;}
-          .splash h2{font-size:clamp(16px,4vw,23px);}
-          ''',encoding='utf8')
-          js=Path('management.js').read_text(encoding='utf8')
-          js=js.replace("profile.ano!==ano||profile.turma!==turma", "profile.nome!==nome||profile.ano!==ano||profile.turma!==turma")
-          Path('management.js').write_text(js,encoding='utf8')
-          data=json.loads(Path('curriculo.json').read_text(encoding='utf8'))
-          assert len(data)==9 and sum(c.get('instituicao')=='UNIVAP' for c in data)==7
-          assert sum(c.get('instituicao')=='MAXIMUS' for c in data)==2
-          print('Portal Educacional pronto: 7 disciplinas UNIVAP, TCA/TCC Maximus')
-          PY
-          rm -rf .portal-source
-      - name: Validar JavaScript e regras
+          node-version: '22'
+      - name: Validar JavaScript, currículo e regras
         run: |
           node --check app.js
           node --check management.js
+          node --check notas.js
+          node --check curriculo.js
+          node --check service-worker.js
           node --check functions/index.js
           python -m json.tool firebase.rules.json > /dev/null
           node - <<'JS'
           const fs=require('fs'),assert=require('assert');
           const data=JSON.parse(fs.readFileSync('curriculo.json','utf8'));
           assert.strictEqual(data.length,9);
-          assert.strictEqual(data.filter(x=>x.instituicao==='UNIVAP').length,7);
-          assert.deepStrictEqual(data.filter(x=>x.instituicao==='MAXIMUS').map(x=>x.id),['maximus_tca','maximus_tcc']);
-          assert(!data.some(x=>x.id==='tcc'));
-          const html=fs.readFileSync('index.html','utf8'),js=fs.readFileSync('app.js','utf8');
-          assert(html.includes('<title>Portal Educacional</title>'));
-          assert(js.includes('portalEducacionalV1'));
-          assert(js.includes('MAXIMUS_INIC_URL'));
-          const rules=JSON.parse(fs.readFileSync('firebase.rules.json','utf8'));
-          assert(rules.rules.portalEducacionalV1);
-          console.log('Validação de currículo, branding e regras: OK');
+          assert.strictEqual(new Set(data.map(x=>x.id)).size,9);
+          assert(data.every(x=>x.nome&&Array.isArray(x.semanas)));
+          assert(fs.readFileSync('index.html','utf8').includes('id="logout-top-btn"'));
+          assert(JSON.parse(fs.readFileSync('firebase.rules.json','utf8')).rules.portalEducacionalV1);
+          console.log('Currículo, identidade e regras: OK');
           JS
-      - name: Registrar arquivos no repositório novo
+      - name: Verificar sessão, notas, administração, Gemini e PWA
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "feat: publicar Portal Educacional independente com materiais"
-            git push origin HEAD:main
-          fi
+          node tests/testar-curriculo.mjs
+          node tests/testar-app.mjs
+          node tests/testar-interface.mjs
+          node tests/testar-backend.cjs
+          node tests/test-pwa.mjs
       - name: Preparar conteúdo público
         run: |
           mkdir -p _site
@@ -109,9 +56,7 @@ jobs:
           cp -r icons materiais _site/
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Enviar site estático
+      - name: Enviar conteúdo
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site

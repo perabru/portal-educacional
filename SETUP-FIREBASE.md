@@ -1,51 +1,63 @@
-# Configuração do Firebase — Portal Educacional independente
+# Firebase — Portal Educacional
 
-## Projetos distintos
-- Portal Educacional: Firebase `apptcc3j`, nó isolado `portalEducacionalV1` no Realtime Database.
-- Maximus INIC: aplicativo separado, com repositório e Firebase próprios. Nenhuma edição deste projeto é aplicada ao Maximus INIC.
+O portal usa o projeto **`apptcc3j`**, o Realtime Database **`apptcc3j-default-rtdb`** e o caminho **`portalEducacionalV1`**. O Firebase do Maximus INIC é separado.
 
-## Etapas de ativação
-1. Em https://console.firebase.google.com/project/apptcc3j, ative **Authentication → Sign-in method → Google**.
-2. Em **Authorized domains**, autorize `perabru.github.io`; em ambiente local teste `localhost`.
-3. Em **Realtime Database → Rules**, **faça backup das regras atuais e MESCLAGEM** do nó `portalEducacionalV1` do arquivo `firebase.rules.json` dentro de `rules`. Não substitua as regras existentes de outros aplicativos.
-4. Faça login em `brunomichel00@gmail.com`, abra Administração, aprova matrículas de alunos por instituição, turma e matérias.
-5. O aluno escolhe `UNIVAP` (7 disciplinas, sem TCC) ou `Maximus` (TCA/TCC) antes da matrícula; o catálogo e as disciplinas escolhidas são filtrados pela instituição. Alterar instituição após aprovação exige nova aprovação.
-6. Entregas e notas permanecem no Firebase do Portal Educacional, e o professor controla a publicação de notas.
+## Login e matrículas
 
-## Gemini (serviço separado)
-O botão **Corrigir com Gemini** fica no painel do administrador. Lê uma amostra do código público do GitHub, formula sugestão de nota e justificativa, que **deve ser revisada e aprovada pelo professor**.
+1. No [Firebase Console](https://console.firebase.google.com/project/apptcc3j), habilite **Authentication → Sign-in method → Google**.
+2. Em **Authentication → Settings → Authorized domains**, autorize `perabru.github.io`. Para desenvolvimento, autorize `localhost`.
+3. Em **Realtime Database → Regras**, copie as regras atuais para backup. Dentro de `rules`, substitua **somente** o nó `portalEducacionalV1` pelo nó correspondente de [firebase.rules.json](firebase.rules.json). Preserve os demais nós do banco e publique.
+4. O aluno entra com Google, informa nome, ano, turma e disciplinas e envia o cadastro. A matrícula fica pendente.
+5. Entre com **`brunomichel00@gmail.com`** e aprove a matrícula no painel administrador. O aluno pode consultar novamente sua aprovação. Alterar nome, ano, turma ou disciplinas exige nova aprovação.
 
-Modelo padrão: `gemini-3.5-flash-lite`. Disponibilidade e cota gratuita variam; verifique a [documentação oficial](https://ai.google.dev/gemini-api/docs/models).
+As disciplinas novas aparecem também para alunos que ainda estão se cadastrando. Os conteúdos de atividades, as entregas e as notas continuam sujeitos à aprovação e às permissões de cada conta. Remover uma matrícula suspende o acesso e preserva o histórico.
+
+### Corrigir “Permission denied”
+
+As regras precisam autorizar **`portalEducacionalV1/usuarios/UID`**. Regras apenas em `usuarios/UID`, ou regras do Firestore, não autorizam este caminho do Realtime Database.
+
+O próprio aluno autenticado pode ler e criar seu cadastro pendente. Somente o administrador pode aprovar matrículas e publicar notas. Não habilite leitura ou escrita pública na raiz para contornar um erro de acesso.
+
+**Publicar os arquivos no GitHub Pages não publica regras no Firebase.** O arquivo `firebase.json` declara o database para uso do Firebase CLI, mas o comando `firebase deploy --only database` substitui o conjunto completo de regras: use-o somente com um arquivo que já contenha a mesclagem das regras atuais do servidor. Para uma aplicação compartilhando o projeto, prefira a alteração pontual pelo Console descrita acima.
+
+## Correção com Gemini
+
+O código da função **`corrigirEntregaGemini`** está em `functions/index.js`. O painel administrador pede a análise, recebe uma sugestão de nota com justificativa e permite revisão do professor antes de publicar. A função não publica notas automaticamente.
+
+Modelo: **`gemini-3.5-flash-lite`**, confirmado na [documentação oficial](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite). A disponibilidade e a cota da API dependem da conta. Hospedar a função no Firebase pode exigir faturamento ativo; o Pages não hospeda essa função.
 
 ```bash
 npm install -g firebase-tools
 firebase login
-cd portal-educacional
 npm --prefix functions install
 firebase functions:secrets:set GEMINI_API_KEY --project apptcc3j
-# Digite sua chave apenas no prompt seguro, não em arquivos do GitHub.
+# Informe a chave da Gemini Developer API no prompt seguro.
 firebase deploy --only functions:portal-educacional --project apptcc3j
 ```
 
-**Aviso:** Cloud Functions pode exigir plano Blaze e faturamento ativo, mesmo que a API Gemini tenha cota gratuita. Não implante sem aceitar explicitamente a cobrança no Console.
+Nunca inclua a chave em arquivos versionados, no HTML/JavaScript público ou nos argumentos do shell. O Secret Manager fornece a chave somente à função. Após a implantação, entre como administrador, abra uma entrega pública no GitHub e clique em **Corrigir com Gemini**. A sugestão deve aparecer sem publicar a nota; revise-a e salve a avaliação quando estiver correta.
 
-A chave fornecida na conversa não é incluída no repositório. Para testar a conexão, use `GEMINI_API_KEY` via variável de ambiente e rode `node tests/testar-gemini.mjs` no seu computador. Isso **não implanta** a função.
+Links de GitHub Pages no formato `https://usuario.github.io/repositorio/` são convertidos para o repositório público correspondente. Páginas com domínio próprio não identificam esse repositório e precisam do link GitHub direto.
 
-## Segurança e limites
-- Não cole sua chave Gemini em `app.js`, `index.html`, configurações do Pages ou arquivos versionados.
-- Não salve chaves ou dados pessoais de alunos em repositórios GitHub públicos usados como entregas.
-- A IA não executa código nem verifica toda a funcionalidade; notas oficiais exigem conferência docente.
-- O portal é uma PWA, mas instalação automática em todos os celulares não é permitida; o usuário escolhe via navegador.
-- Alunos acessam apenas entregas e notas da própria conta. As regras do database são independentes do site estático.
+A análise registra o commit e os arquivos consultados, respeita a nota máxima registrada na entrega e ignora pastas de dependências e arquivos de credenciais. Ela lê uma amostra, não executa o código do aluno. Solicitações simultâneas e repetições imediatas da mesma entrega são limitadas.
 
-## Corrigir "Permission denied" no login de alunos
+Para testar apenas a credencial, configure `GEMINI_API_KEY` no ambiente e execute `node tests/testar-gemini.mjs`. Esse comando não implanta a função.
 
-A versão publicada do Portal Educacional usa o Firebase `apptcc3j`, Realtime Database `apptcc3j-default-rtdb` e acessa os perfis em **`portalEducacionalV1/usuarios/UID`**. Regras antigas em `usuarios` sem o prefixo **não autorizam** este caminho.
+## Verificação local
 
-1. No [Firebase Console](https://console.firebase.google.com/project/apptcc3j), vá a **Realtime Database → Regras** (não Firestore).
-2. Faça backup das regras atuais. Na raiz `rules`, **mescle** o nó `portalEducacionalV1` inteiro do arquivo [firebase.rules.json](firebase.rules.json), sem apagar as permissões existentes de outros projetos.
-3. Clique em **Publicar**. Confirme que o Google está habilitado em Authentication e que `perabru.github.io` está nos domínios autorizados.
-4. Entre com um aluno: ele deverá conseguir preencher **ano, turma e disciplinas**, com estado **pendente**. O administrador aprova no painel, e o aluno volta para acessar seus dados.
-5. Se ainda falhar, use o simulador de regras do Realtime Database para testar a leitura em `/portalEducacionalV1/usuarios/UID` com `auth.uid` igual ao UID dessa conta.
+```bash
+node --check app.js
+node --check management.js
+node --check functions/index.js
+node tests/testar-backend.cjs
+```
 
-**Importante:** GitHub Pages publica HTML/JS/CSS. Alterar `firebase.rules.json` no repositório **não** altera as regras do Firebase automaticamente. Nunca use `".read": true` ou `".write": true` na raiz para contornar este erro.
+`tests/testar-backend.cjs` verifica autorização, limites, erros dos serviços e persistência de sugestões com serviços controlados. Não usa credenciais nem publica notas.
+
+`tests/testar-regras.cjs` usa o **Firebase Database Emulator** na porta 9000 e o projeto fictício `demo-portal-educacional`. Instale `firebase-tools`, `firebase` e `@firebase/rules-unit-testing` no ambiente de desenvolvimento, inicie o emulador com as regras locais e execute o teste. Ele verifica cadastro pendente, aprovação, entregas, disciplinas novas, isolamento de notas e suspensão de acesso, sem acessar produção.
+
+## PWA
+
+No Android, use a opção de instalação oferecida pelo navegador. No iPhone/iPad, abra no Safari e use **Compartilhar → Adicionar à Tela de Início**. A instalação precisa ser aceita em cada aparelho. O botão **Sair** encerra a sessão e permite trocar de conta.
+
+Os materiais publicados no GitHub Pages são públicos. Cadastros, entregas e notas permanecem no Firebase protegido pelas regras de acesso.

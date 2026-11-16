@@ -86,19 +86,19 @@ const EXTRAS=[
  ['Drive de Pobre – catálogo externo','Catálogo solicitado pelo professor; disponibilidade e licenças não verificadas','https://drivedepobre.com/','📚','CATÁLOGO EXTERNO']
 ];
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const link=(u,label,cls='pill-link')=>`<a class="${cls}" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+const link=(u,label,cls='pill-link')=>{try{const url=new URL(String(u),'https://portal.invalid/');if(!['https:','http:'].includes(url.protocol)||url.username||url.password)return `<span>${esc(label)}</span>`;return `<a class="${esc(cls)}" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`}catch{return `<span>${esc(label)}</span>`}};
 let subjects=[],subjectById={},user=null,auth=null,db=null,F=null,management=null,currentPage='home',selectedBim=0,teacherRows=[],gradeFilter='todos',gradeSnapshot=null,callableAI=null;
 const title=s=>`<div class="page-head"><div><div class="kicker">${esc(s.top||'PORTAL EDUCACIONAL')}</div><h1>${esc(s.h)}</h1><p>${esc(s.p||'')}</p></div>${s.actions||''}</div>`;
 function toast(message){const t=$('#toast');t.textContent=message;t.classList.add('show');clearTimeout(window._toastT);window._toastT=setTimeout(()=>t.classList.remove('show'),4100)}
-function nav(route){location.hash='#/'+route;$('#sidebar').classList.remove('open');}
+function nav(route){location.hash='#/'+route;closeMenu();}
 function setConnection(s){$('#conn-state').textContent=s;$('.status-dot').style.background=s==='Conectado'?'#48d5a3':'#ffce70'}
 function getSub(id){return subjectById[id]}
 function courseCount(s){return s.semanas.filter(w=>!w.sem_tema).length}
 function visibleSubjects(){return management?.active()&&!management.owner()?management.mine():subjects}
 function metaFor(s){return M[s.id]||{emoji:'📚',accent:'#67b7e5',video:s.video||'https://www.youtube.com/results?search_query='+encodeURIComponent(s.nome+' aula'),videoLabel:'Pesquisar videoaulas',pratica:['Prepare uma explicação do tema estudado.','Demonstre um exemplo prático.','Documente o código, o processo e os testes.','Crie um tutorial para outro aluno.','Publique tudo no GitHub.'],projeto:'Projeto Integrador de '+s.nome,brief:'Construa um projeto demonstrativo que integre os conteúdos da disciplina.',deliver:['Funcionalidade reproduzível','Código e materiais no GitHub','README de documentação','Apresentação dos testes'],example:'Crie um protótipo, documente cada etapa e compartilhe com o professor via GitHub.'}}
 function doneKey(id,n,i){return `portal-educacional-ex-${user?.uid||'anon'}-${id}-${n}-${i}`}
-function doneCount(id){let n=0;const s=getSub(id); if(!s)return 0;for(const w of s.semanas){for(let i=0;i<3;i++)if(localStorage.getItem(doneKey(id,w.n,i))==='1')n++}return n}
-function progress(s){return Math.round(doneCount(s.id)/Math.max(1,s.semanas.length*3)*100)}
+function doneCount(id){let n=0;const s=getSub(id); if(!s)return 0;for(const w of s.semanas.filter(w=>!w.sem_tema)){for(let i=0;i<weeklyExercises(s,w).length;i++)if(savedValue(doneKey(id,w.n,i))==='1')n++}return n}
+function progress(s){return Math.round(doneCount(s.id)/Math.max(1,s.semanas.filter(w=>!w.sem_tema).reduce((n,w)=>n+weeklyExercises(s,w).length,0))*100)}
 function schoolOf(s){return (s.instituicao||'UNIVAP').toUpperCase()==='MAXIMUS'?'MAXIMUS':'UNIVAP'}
 function courseSections(){const entries=visibleSubjects();return `<div class="course-grid">${entries.map(courseCard).join('')}</div>`}
 function maximusAppCard(s){if(!['maximus_tca','maximus_tcc'].includes(s.id))return '';return `<aside class="notice max-inic-card"><span>📱</span><div><strong>Aplicativo para TCA e TCC</strong><p>Use o Maximus INIC para acompanhar o grupo e escrever o trabalho. No celular, abra o link e escolha a opção de instalar o aplicativo no navegador.</p>${link(MAXIMUS_INIC_URL,'Abrir Maximus INIC','primary-btn')}</div></aside>`}
@@ -112,11 +112,11 @@ function sourceLink(s){if(!s?.planejamento)return '<span class="muted">Material 
 function weeklyTargets(s,w){return [`Compreender os conceitos e a terminologia de “${w.tema}”.`,`Relacionar o conteúdo às aplicações de ${s.nome}.`,`Produzir um registro prático e documentar o resultado no GitHub.`]}
 function weeklyExercises(s,w){if(Array.isArray(w.exercicios)&&w.exercicios.length)return w.exercicios.map(esc);const v=esc(w.tema),m=metaFor(s);switch(s.id){case 'bd':return [`Elabore um exemplo de dados ou tabelas que demonstre o tema: ${v}.`,'Construa um modelo, consulta ou script SQL relacionado ao conteúdo e comente as etapas.','Registre os testes e publique script/diagrama e README no GitHub.'];case 'cldi':return [`Desenhe uma representação lógica ou tabela verdade para: ${v}.`,'Simule pelo menos duas entradas diferentes e analise as saídas.','Documente equações, esquemas e evidências no GitHub.'];case 'cldii':return [`Represente os estados e transições envolvidos em: ${v}.`,'Monte ou simule um circuito sequencial demonstrativo, quando aplicável.','Registre diagrama temporal, capturas e conclusão no GitHub.'];case 'eai':return [`Identifique componentes e grandezas relevantes para: ${v}.`,'Calcule ou simule valores elétricos, informando unidades e medições.','Publique esquema, contas e relatório do experimento no GitHub.'];case 'ps':return [`Faça um esquema ou gráfico que represente: ${v}.`,'Resolva uma aplicação numérica ou compare dois cenários de transmissão.','Registre fórmulas, observações e resultados no GitHub.'];case 'redes':return [`Desenhe uma topologia ou situação real envolvendo: ${v}.`,'Configure ou simule um cenário no Packet Tracer quando aplicável.','Teste, capture as evidências e publique a documentação no GitHub.'];case 'sc':return [`Explique por meio de um diagrama o funcionamento de: ${v}.`,'Realize teste com comandos, máquina virtual ou representação técnica quando aplicável.','Publique capturas, código e análise no GitHub.'];default:return [`Escreva ou revise a parte da pesquisa referente a: ${v}.`,'Produza uma evidência objetiva, revisão ou diagrama pertinente à etapa.','Atualize o repositório do grupo com documentação e histórico dos commits.']}}
 function content(s,w){const m=metaFor(s);return `<h4>Conteúdo da aula</h4><p>${esc(w.tema)}</p><h4>Referências</h4>${w.video?link(w.video,'Videoaula'):link(m.video,m.videoLabel)}${w.material?link(w.material,'Material da semana'):''}<h4>Entrega</h4><p>Os exercícios da semana devem ser registrados no GitHub.</p>`}
-function weekCard(s,w){if(w.sem_tema)return `<article class="week-card"><div class="week-btn"><span class="week-num">W${String(w.n).padStart(2,'0')}</span><div><strong>Semana ${w.n}: revisão e orientação</strong><small>Sem tópico definido no planejamento original</small></div><span class="badge">REVISÃO</span></div></article>`;return `<article class="week-card" id="week-${w.n}"><button class="week-btn" data-expand="${w.n}" aria-expanded="false"><span class="week-num">W${String(w.n).padStart(2,'0')}</span><div style="flex:1"><strong>${esc(w.tema)}</strong><small>Semana ${w.n} · ${w.bimestre}º bimestre · ${w.adicionado?'Roteiro complementar':'Planejamento 2023'}</small></div><span class="arr">⌄</span></button><div class="week-detail is-hidden" id="detail-${w.n}"><div class="reading-content">${content(s,w)}</div><h4>✅ Lista de exercícios — final da aula</h4><p class="muted">Faça os três exercícios abaixo. <strong>Todos devem estar publicados no GitHub</strong> e identificados no README do repositório.</p><ol class="exercise-list">${weeklyExercises(s,w).map((q,i)=>`<li><input type="checkbox" data-check="${s.id}:${w.n}:${i}" id="ch-${s.id}-${w.n}-${i}" ${localStorage.getItem(doneKey(s.id,w.n,i))==='1'?'checked':''}><label for="ch-${s.id}-${w.n}-${i}"><b>Exercício ${i+1}.</b> ${q}</label></li>`).join('')}</ol><div class="week-actions"><button class="primary-btn" data-submit="${s.id}:semanal:${w.n}"> Enviar pelo GitHub</button><button class="outline-btn" data-go="apostila/${s.id}">📘 Apostila</button></div></div></article>`}
+function weekCard(s,w){if(w.sem_tema)return `<article class="week-card"><div class="week-btn"><span class="week-num">W${String(w.n).padStart(2,'0')}</span><div><strong>Semana ${w.n}: revisão e orientação</strong><small>Sem tópico definido no planejamento original</small></div><span class="badge">REVISÃO</span></div></article>`;return `<article class="week-card" id="week-${w.n}"><button class="week-btn" data-expand="${w.n}" aria-expanded="false"><span class="week-num">W${String(w.n).padStart(2,'0')}</span><div style="flex:1"><strong>${esc(w.tema)}</strong><small>Semana ${w.n} · ${w.bimestre}º bimestre · ${w.personalizado?'Aula do professor':w.adicionado?'Roteiro complementar':'Planejamento 2023'}</small></div><span class="arr">⌄</span></button><div class="week-detail is-hidden" id="detail-${w.n}"><div class="reading-content">${content(s,w)}</div><h4>✅ Lista de exercícios — final da aula</h4><p class="muted">Faça os exercícios abaixo. <strong>Todos devem estar publicados no GitHub</strong> e identificados no README do repositório.</p><ol class="exercise-list">${weeklyExercises(s,w).map((q,i)=>`<li><input type="checkbox" data-check="${s.id}:${w.n}:${i}" id="ch-${s.id}-${w.n}-${i}" ${savedValue(doneKey(s.id,w.n,i))==='1'?'checked':''}><label for="ch-${s.id}-${w.n}-${i}"><b>Exercício ${i+1}.</b> ${q}</label></li>`).join('')}</ol><div class="week-actions"><button class="primary-btn" data-submit="${s.id}:semanal:${w.n}"> Enviar pelo GitHub</button><button class="outline-btn" data-go="apostila/${s.id}">📘 Apostila</button></div></div></article>`}
 function rubric(id,max){if(max===2)return [['Exercício 1',0.4],['Exercício 2',0.4],['Exercício 3',0.4],['Exercício 4',0.4],['Documentação e GitHub',0.4]];if(id==='maximus_tca')return [['Problema de pesquisa e justificativa',2],['Objetivos e metodologia',3],['Planejamento e evidências',3],['Referências e documentação',2]];if(id==='maximus_tcc')return [['Pesquisa e metodologia',3],['Resultados e evidências',3],['Documentação e referências',2],['Apresentação e defesa',2]];return [['Funcionalidade e execução',4],['Correção técnica',3],['Código, documentação e GitHub',2],['Apresentação e testes',1]]}
 function rubricTable(id,max){return `<table class="rubric"><thead><tr><th>Critério</th><th>Valor máximo</th></tr></thead><tbody>${rubric(id,max).map(([q,n])=>`<tr><td>${esc(q)}</td><td>${n.toLocaleString('pt-BR',{minimumFractionDigits:1})}</td></tr>`).join('')}<tr><td><strong>Total</strong></td><td><strong>${max.toFixed(1).replace('.',',')} pontos</strong></td></tr></tbody></table>`}
 function taskCard(s,kind){const m=metaFor(s),pr=kind==='pratica',max=pr?2:10;return `<div class="task-card"><div class="tag-list"><span class="badge ${pr?'green':'red'}">${pr?'LISTA PRÁTICA':'PROJETO'}</span><span class="badge">${max===2?'Até 2,0 pontos':'Nota de 0 a 10'}</span></div><h3>${pr?'Lista prática obrigatória':esc(m.projeto)}</h3><p>${pr?'5 tarefas práticas de 0,4 ponto cada, totalizando até 2 pontos.':esc(m.brief)}</p><ul>${(pr?m.pratica:m.deliver).map(a=>`<li>${esc(a)}</li>`).join('')}</ul><div><strong style="font-size:12px">Critérios de avaliação</strong>${rubricTable(s.id,max)}</div><div class="task-footer"><span class="badge blue">GITHUB OBRIGATÓRIO</span><button class="primary-btn" data-submit="${s.id}:${kind}:1"> Enviar link</button></div></div>`}
-function renderTasks(id){const items=id&&getSub(id)?[getSub(id)]:visibleSubjects();return `${title({top:'DESAFIOS DE APRENDIZAGEM',h:id?getSub(id).nome:'Atividades e projetos',p:'Cada disciplina possui lista prática obrigatória de até 2 pontos e projeto próprio avaliado de 0 a 10.',actions:'<button class="outline-btn" data-go="guide">Como entregar no GitHub</button>'})}<div class="notice"><span>⚠️</span><div><strong>Entrega exclusivamente por link do GitHub</strong><p>Todos os exercícios práticos, trabalhos, projetos, códigos e evidências devem estar no GitHub. Inclua README.md, código-fonte, documentação, capturas ou simulações. Depois envie o link no formulário do portal.</p></div></div>${(management?.renderPosted(id)||'')}${items.map(s=>`<div class="section-heading"><div><h2>${metaFor(s).emoji} ${esc(s.nome)}</h2><p>Enunciados, critérios e entrega por repositório.</p></div><button class="outline-btn" data-go="course/${s.id}">Voltar às aulas </button></div><div class="task-grid">${taskCard(s,'pratica')}${taskCard(s,'projeto')}</div>`).join('')}`}
+function renderTasks(id){if(id&&!getSub(id))return empty('Disciplina não encontrada','Confira o endereço.');const items=id&&getSub(id)?[getSub(id)]:visibleSubjects();return `${title({top:'DESAFIOS DE APRENDIZAGEM',h:id?getSub(id).nome:'Atividades e projetos',p:'Cada disciplina possui lista prática obrigatória de até 2 pontos e projeto próprio avaliado de 0 a 10.',actions:'<button class="outline-btn" data-go="guide">Como entregar no GitHub</button>'})}<div class="notice"><span>⚠️</span><div><strong>Entrega exclusivamente por link do GitHub</strong><p>Todos os exercícios práticos, trabalhos, projetos, códigos e evidências devem estar no GitHub. Inclua README.md, código-fonte, documentação, capturas ou simulações. Depois envie o link no formulário do portal.</p></div></div>${(management?.renderPosted(id)||'')}${items.map(s=>`<div class="section-heading"><div><h2>${metaFor(s).emoji} ${esc(s.nome)}</h2><p>Enunciados, critérios e entrega por repositório.</p></div><button class="outline-btn" data-go="course/${s.id}">Voltar às aulas </button></div><div class="task-grid">${taskCard(s,'pratica')}${taskCard(s,'projeto')}</div>`).join('')}`}
 function renderApostila(id){const s=getSub(id);if(!s)return empty('Apostila não encontrada','');const m=metaFor(getSub(id)||{id});return `${title({top:'BIBLIOTECA DIGITAL',h:'Apostila • '+s.nome,p:'Aulas e exercícios da disciplina.',actions:`<button class="primary-btn" data-download="${id}"> Baixar apostila HTML</button><button class="outline-btn" data-print>🖨 Imprimir / PDF</button>`})}<div class="notice"><span>📚</span><div><strong>Guia de estudo</strong><p>Consulte as aulas, referências e exercícios abaixo.</p></div></div>${[1,2,3,4].map(b=>`<section class="panel" style="margin:17px 0"><div class="kicker">CAPÍTULO ${b}</div><h2>${b}º bimestre</h2>${s.semanas.filter(w=>w.bimestre===b&&!w.sem_tema).map(w=>`<div class="reading-content" style="padding:18px 0;border-bottom:1px solid var(--border)"><h3>Semana ${w.n}: ${esc(w.tema)}</h3>${content(s,w)}<h4>Exercícios de fixação</h4><ol>${weeklyExercises(s,w).map(x=>`<li>${x}</li>`).join('')}</ol></div>`).join('')||'<p>Sem tema definido no planejamento fornecido.</p>'}</section>`).join('')}<div class="panel"><h3>Referências para aprofundamento</h3><p>${link(m.video,m.videoLabel)}${link('https://github.com/skills/introduction-to-github','GitHub Skills')}</p><p>Disciplina: ${esc(s.nome)}. Fonte do planejamento: ${esc(s.origem)}.</p></div>`}
 function createApostila(id){const s=getSub(id),m=metaFor(getSub(id)||{id});if(!s)return;const contentText=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Apostila - ${esc(s.nome)}</title><style>body{font:15px/1.65 Georgia,serif;color:#171d27;max-width:790px;margin:50px auto;padding:0 25px}h1,h2,h3{font-family:Arial,sans-serif;color:#123d7e}h1{font-size:30px}h2{border-bottom:2px solid #2862ac;padding-bottom:8px;margin-top:45px}h3{margin-top:28px}.note{background:#e9f1fd;padding:18px;border-left:4px solid #2e6bd2}@media print{body{margin:0;max-width:none}h2,h3{break-after:avoid}section{break-inside:avoid}}</style></head><body><h1>Apostila • ${esc(s.nome)}</h1><p>Portal Educacional — Prof. Bruno Michel Pera.</p><p>Planejamento: ${esc(s.origem)}. Entregue os exercícios pelo GitHub.</p>${[1,2,3,4].map(b=>`<h2>${b}º Bimestre</h2>`+s.semanas.filter(w=>w.bimestre===b&&!w.sem_tema).map(w=>`<section><h3>Semana ${w.n} — ${esc(w.tema)}</h3><p>Conteúdo: ${esc(w.tema)}. Consulte o exemplo e faça os exercícios.</p><h4>Exercícios da aula</h4><ol>${weeklyExercises(s,w).map(x=>`<li>${x}</li>`).join('')}</ol></section>`).join('')).join('')}<p>Fonte: ${esc(s.origem)}.</p></body></html>`;const a=document.createElement('a');const url=URL.createObjectURL(new Blob([contentText],{type:'text/html;charset=utf-8'}));a.href=url;a.download=`Apostila_${id.toUpperCase()}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);toast('Apostila HTML gerada. Você pode abri-la ou imprimir em PDF.');}
 function renderExtras(){return `${title({top:'EXPLORE • LEARN • BUILD',h:'Cursos extras',p:'Cursos e materiais complementares.'})}<div class="notice"><span>🎮</span><div><strong>Desafio extra: SumoBotStudio</strong><p>Experimente o simulador de robôs criado pelo professor. Aplique lógica, sensores, programação e estratégia em desafios interativos.</p>${link('https://perabru.github.io/SumoBotStudio/','Acessar SumoBotStudio')}</div></div><div class="resource-grid">${EXTRAS.map(x=>`<article class="resource-card"><span class="resource-icon">${x[3]}</span><span class="badge blue">${esc(x[4])}</span><strong>${esc(x[0])}</strong><p>${esc(x[1])}</p>${link(x[2],'Acessar curso')}</article>`).join('')}</div><div class="notice"><span>ℹ️</span><div><strong>Catálogo Drive de Pobre</strong><p>O endereço solicitado está incluído como referência externa, mas não foi possível verificar os cursos específicos do catálogo. Para GitHub, priorizamos os cursos gratuitos e oficialmente acessíveis acima.</p></div></div>`}
@@ -124,31 +124,269 @@ function renderTools(){return `${title({top:'KIT DO DESENVOLVEDOR',h:'Downloads 
 function renderGuide(){const steps=[['Crie uma conta e um repositório','Entre em github.com, crie um repositório público com nome da disciplina e ative um README.'],['Organize suas pastas','Use pastas como semana-01/, semana-02/, lista-pratica/ e projeto/. Inclua código-fonte, esquemas e imagens.'],['Faça commits frequentes','Cada avanço deve ter commit com mensagem explicativa; não envie somente um ZIP sem histórico.'],['Documente no README.md','Explique objetivo, tecnologias, instalação, como executar, testes e autores. Inclua capturas e resultados.'],['Copie o link do repositório','Exemplo: https://github.com/usuario/projeto-disciplina. Confira se o link abre sem pedir permissão.'],['Envie no portal','Clique em Enviar atividade, informe disciplina, tipo, semana (quando aplicável) e o endereço do GitHub.']];return `${title({top:'REGRAS DE ENTREGA',h:'Guia rápido do GitHub',p:'Todas as atividades devem estar publicadas e documentadas antes do envio.'})}<div class="two-col"><div><div class="guide-steps">${steps.map((x,i)=>`<div class="guide-step"><span>${String(i+1).padStart(2,'0')}</span><div><h3>${esc(x[0])}</h3><p>${esc(x[1])}</p></div></div>`).join('')}</div></div><aside class="aside-stack"><div class="panel"><h3>Checklist antes da entrega</h3><ul><li>Repositório público no GitHub</li><li>Código ou simulação executável</li><li>README com instruções e resultados</li><li>Capturas e evidências quando aplicável</li><li>Link testado em janela anônima</li><li>Disciplina e tarefa identificadas</li></ul><button class="primary-btn full" data-submit="bd:pratica:1">Enviar atividade</button></div><div class="panel"><h3>Aprenda Git e GitHub</h3>${link('https://www.cursoemvideo.com/curso/curso-de-git-e-github/','Curso gratuito – Curso em Vídeo')}${link('https://github.com/skills/introduction-to-github','GitHub Skills – Introdução')}${link(videoGit,'Videoaulas do curso')}</div></aside></div>`}
 function empty(h,p){return `<div class="empty-state"><b>▤</b><h3>${esc(h)}</h3><p>${esc(p)}</p><button class="primary-btn" data-go="home">Voltar ao início</button></div>`}
 function myDate(ts){if(!ts)return 'Data indisponível';return new Date(ts).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}
-function submissionLabel(o){const s=getSub(o.disciplina);return `${s?.nome||o.disciplina} · ${o.tipo==='pratica'?'Lista prática (até 2 pontos)':o.tipo==='projeto'?'Projeto (0–10)':`Semana ${o.semana}`}`}
-function viewSubmission(uid,key,o,grade,teacher=false){const at=management?.getPost(o.atividadeId),max=Number(at?.notaMax??(o.tipo==='pratica'?2:10));return `<div class="submission-row"><div style="min-width:0"><strong>${esc(submissionLabel(o))}</strong><small>${esc(o.nome||'Aluno')} · ${myDate(o.criadoEm)}</small><div>${link(o.github,'Ver repositório GitHub')}</div>${o.comentario?`<p style="font-size:12px;margin:8px 0">${esc(o.comentario)}</p>`:''}${grade?`<p style="font-size:12px;margin:5px 0">📝 <b>Professor:</b> ${esc(grade.comentario||'Avaliado')}</p>`:''}${teacher?`<div class="grade-area"><label>Nota <input type="number" min="0" max="${max}" step="0.1" id="nota-${key}" value="${grade?.nota??''}" aria-label="Nota"></label><textarea rows="1" id="feedback-${key}" placeholder="Feedback ao aluno">${esc(grade?.comentario||'')}</textarea><button class="primary-btn" data-grade="${uid}:${key}:${max}">Salvar</button></div>`:''}</div><div class="submission-meta">${grade?`<span class="badge green">${Number(grade.nota).toFixed(1).replace('.',',')} / ${max.toFixed(1).replace('.',',')}</span>`:'<span class="badge blue">Enviado</span>'}</div></div>`}
+function submissionLabel(o){const s=getSub(o.disciplina);return o.atividadeTitulo||`${s?.nome||o.disciplina} · ${o.tipo==='pratica'?'Lista prática (até 2 pontos)':o.tipo==='projeto'?'Projeto (0–10)':`Semana ${o.semana}`}`}
+function viewSubmission(uid,key,o,grade,teacher=false){grade=grade&&grade.nota!==null&&grade.nota!==''&&Number.isFinite(Number(grade.nota))?grade:null;const at=management?.getPost(o.atividadeId),max=Number(o.notaMax??at?.notaMax??(o.tipo==='pratica'?2:10));return `<div class="submission-row"><div style="min-width:0"><strong>${esc(submissionLabel(o))}</strong><small>${esc(o.nome||'Aluno')} · ${myDate(o.criadoEm)}</small><div>${link(o.github,'Ver repositório GitHub')}</div>${o.comentario?`<p style="font-size:12px;margin:8px 0">${esc(o.comentario)}</p>`:''}${grade?`<p style="font-size:12px;margin:5px 0">📝 <b>Professor:</b> ${esc(grade.comentario||'Avaliado')}</p>`:''}${teacher?`<div class="grade-area"><label>Nota <input type="number" min="0" max="${max}" step="0.1" id="nota-${key}" value="${grade?.nota??''}" aria-label="Nota"></label><textarea rows="1" id="feedback-${key}" placeholder="Feedback ao aluno">${esc(grade?.comentario||'')}</textarea><button class="primary-btn" data-grade="${uid}:${key}:${max}">Salvar</button></div>`:''}</div><div class="submission-meta">${grade?`<span class="badge green">${Number(grade.nota).toFixed(1).replace('.',',')} / ${max.toFixed(1).replace('.',',')}</span>`:'<span class="badge blue">Enviado</span>'}</div></div>`}
 
 async function renderNotes(force=false){
- const view=$('#view');view.innerHTML=title({top:'MINHAS NOTAS // DASHBOARD',h:'Consultando seu boletim',p:'Carregando notas e feedback do Firebase...'});
- if(!db||!F){view.innerHTML=empty('Banco de dados indisponível','Ative o Firebase para consultar suas notas.');return}
+ const view=$('#view'),uid=user?.uid,version=renderVersion,session=sessionVersion;
+ const current=()=>user?.uid===uid&&renderVersion===version&&sessionVersion===session&&currentPage==='notes';
+ view.innerHTML=title({top:'MINHAS NOTAS',h:'Consultando seu boletim',p:'Carregando notas e comentários...'});
+ if(!db||!F||!uid)return;
  try{
-  if(force||!gradeSnapshot||gradeSnapshot.uid!==user.uid){
-    const [subs,notes,posted]=await Promise.all([F.get(F.ref(db,`${DB_ROOT}/submissoes/${user.uid}`)),F.get(F.ref(db,`${DB_ROOT}/avaliacoes/${user.uid}`)),F.get(F.ref(db,`${DB_ROOT}/atividades`))]);
-    gradeSnapshot={uid:user.uid,submissions:subs.val()||{},grades:notes.val()||{},posts:posted.val()||{}};
-  }
+  const [subs,notes,posted]=await Promise.all([F.get(F.ref(db,`${DB_ROOT}/submissoes/${uid}`)),F.get(F.ref(db,`${DB_ROOT}/avaliacoes/${uid}`)),F.get(F.ref(db,`${DB_ROOT}/atividades`))]);
+  if(!current())return;
+  gradeSnapshot={uid,submissions:subs.val()||{},grades:notes.val()||{},posts:posted.val()||{}};
   view.innerHTML=renderStudentGradeDashboard({subjects:visibleSubjects(),...gradeSnapshot,filter:gradeFilter,studentName:management.profile()?.nome||user.displayName||'Estudante'});
- }catch(e){console.warn('Notas:',e);view.innerHTML=empty('Notas indisponíveis','Não foi possível consultar suas notas. Tente novamente.');}
+ }catch(e){if(current())view.innerHTML=empty('Notas indisponíveis','Não foi possível consultar suas notas. Tente novamente.');}
 }
-
-async function renderSubmissions(){const root=$('#view');root.innerHTML=title({top:'MINHAS ENTREGAS',h:'Atividades enviadas',p:'Os links submetidos ficam registrados no Firebase, vinculados à sua conta Google.',actions:'<button class="primary-btn" data-submit="bd:pratica:1">+ Nova entrega</button>'})+empty('Consultando suas atividades...','');if(!db||!F){root.innerHTML+=`<div class="notice"><span>⚠</span><div><strong>Banco de dados indisponível</strong><p>Configure o Firebase e as regras do Realtime Database.</p></div></div>`;return}try{const [ss,gg]=await Promise.all([F.get(F.ref(db,`${DB_ROOT}/submissoes/${user.uid}`)),F.get(F.ref(db,`${DB_ROOT}/avaliacoes/${user.uid}`))]);const entries=Object.entries(ss.val()||{}).sort((a,b)=>(b[1].criadoEm||0)-(a[1].criadoEm||0));const grades=gg.val()||{};root.innerHTML=title({top:'MINHAS ENTREGAS',h:'Atividades enviadas',p:'Os links submetidos ficam registrados no Firebase, vinculados à sua conta Google.',actions:'<button class="primary-btn" data-submit="bd:pratica:1">+ Nova entrega</button>'})+(entries.length?entries.map(([key,o])=>viewSubmission(user.uid,key,o,grades[key])).join(''):empty('Nenhuma atividade enviada','Use o formulário para enviar o link do seu repositório GitHub.'))}catch(e){root.innerHTML+=`<div class="notice"><span>⚠</span><div><strong>Não foi possível carregar as entregas</strong><p>Não foi possível consultar suas entregas. Tente novamente ou peça ajuda ao professor.</p></div></div>`}}
+async function renderSubmissions(){
+ const root=$('#view'),uid=user?.uid,version=renderVersion,session=sessionVersion;
+ const current=()=>user?.uid===uid&&renderVersion===version&&sessionVersion===session&&currentPage==='submissions';
+ const heading=()=>title({top:'MINHAS ENTREGAS',h:'Atividades enviadas',p:'Consulte seus envios e os comentários do professor.',actions:'<button class="primary-btn" data-submit="nova:pratica:1">Nova entrega</button>'});
+ root.innerHTML=heading()+'<div class="loading-panel" role="status">Carregando entregas...</div>';
+ if(!db||!F||!uid)return;
+ try{
+  const [ss,gg]=await Promise.all([F.get(F.ref(db,`${DB_ROOT}/submissoes/${uid}`)),F.get(F.ref(db,`${DB_ROOT}/avaliacoes/${uid}`))]);
+  if(!current())return;
+  const entries=Object.entries(ss.val()||{}).sort((a,b)=>(b[1].criadoEm||0)-(a[1].criadoEm||0)),grades=gg.val()||{};
+  root.innerHTML=heading()+(entries.length?entries.map(([key,o])=>viewSubmission(uid,key,o,grades[key])).join(''):empty('Nenhuma atividade enviada','Envie o link do seu repositório GitHub.'));
+ }catch(e){if(current())root.innerHTML=heading()+empty('Entregas indisponíveis','Confira sua conexão e tente novamente.');}
+}
 async function renderTeacher(){if(user?.email?.toLowerCase()!==TEACHER_EMAIL){$('#view').innerHTML=empty('Acesso restrito','Este painel é exclusivo do professor.');return}const root=$('#view');root.innerHTML=title({top:'ÁREA DO PROFESSOR',h:'Correção de atividades',p:'Confira os links enviados e atribua feedback e notas.'})+empty('Carregando registros...','');try{const [ss,gg]=await Promise.all([F.get(F.ref(db,`${DB_ROOT}/submissoes`)),F.get(F.ref(db,`${DB_ROOT}/avaliacoes`))]);const sub=ss.val()||{},notes=gg.val()||{};teacherRows=Object.entries(sub).flatMap(([uid,rows])=>Object.entries(rows||{}).map(([key,o])=>({uid,key,o,grade:notes?.[uid]?.[key]}))).sort((a,b)=>(b.o.criadoEm||0)-(a.o.criadoEm||0));root.innerHTML=title({top:'ÁREA DO PROFESSOR',h:'Correção de atividades',p:`${teacherRows.length} entrega(s) encontradas. O acesso depende das regras de segurança do Firebase.`})+`<div class="toolbar"><input class="search" id="teacher-search" placeholder="Buscar por nome, disciplina ou atividade..."><span class="badge blue">${teacherRows.length} entregas</span></div><div id="teacher-results">${teacherRows.length?teacherRows.map(x=>viewSubmission(x.uid,x.key,x.o,x.grade,true)).join(''):empty('Nenhuma atividade recebida','Os links dos alunos aparecerão aqui.')}</div>`}catch(e){root.innerHTML=title({h:'Painel do professor',p:'O Firebase precisa permitir leitura global de entregas para sua conta.'})+`<div class="notice"><span>⚠</span><div><strong>Não foi possível carregar o painel</strong><p>${esc(e.message)}. Mescle as regras de segurança em SETUP-FIREBASE.md.</p></div></div>`}}
 async function saveGrade(code){const [uid,key,maxStr]=code.split(':'),max=Number(maxStr),n=Number($('#nota-'+key)?.value),feedback=$('#feedback-'+key)?.value.trim()||'';if(!Number.isFinite(n)||n<0||n>max||$('#nota-'+key).value.trim()===''){toast(`Informe uma nota entre 0 e ${max}.`);return}try{await F.set(F.ref(db,`${DB_ROOT}/avaliacoes/${uid}/${key}`),{nota:n,comentario:feedback,avaliadoEm:Date.now(),professor:user.email});toast('Nota e feedback salvos.');await renderTeacher()}catch(e){toast('Erro ao salvar nota: '+e.message)}}
-function showModal(spec='bd:pratica:1'){const [id,typ,week]=spec.split(':'),s=getSub(id)||visibleSubjects()[0]||subjects[0];$('#sub-course').innerHTML=visibleSubjects().map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('');$('#sub-course').value=s.id;$('#sub-type').value=typ||'pratica';fillWeeks(Number(week)||1);$('#sub-url').value='';$('#sub-note').value='';$('#form-message').textContent='';$('#submit-modal').showModal()}
-function fillWeeks(preselected=1){const s=getSub($('#sub-course').value)||visibleSubjects()[0];if(!s)return;$('#sub-week').innerHTML=s.semanas.filter(w=>!w.sem_tema).map(w=>`<option value="${w.n}">Semana ${w.n}: ${esc(w.tema.slice(0,52))}</option>`).join('');$('#sub-week').value=preselected;$('#week-wrap').classList.toggle('is-hidden',$('#sub-type').value!=='semanal');const posts=management?.activityChoices(s.id,$('#sub-type').value)||'';$('#sub-activity').innerHTML='<option value="">Lista/projeto fixo ou exercício da semana</option>'+posts;$('#sub-activity-wrap').classList.toggle('is-hidden',!posts)}
-function isGitHubUrl(u){try{const x=new URL(u);return x.protocol==='https:'&&(/(^|\.)github\.com$/.test(x.hostname)||/(^|\.)github\.io$/.test(x.hostname))&&x.pathname.split('/').filter(Boolean).length>=2}catch{return false}}
-async function sendSubmission(e){e.preventDefault();$('#form-message').textContent='';if(!user||!db||!F||!management?.active()){$('#form-message').textContent='Faça login com matrícula aprovada para enviar.';return}const github=$('#sub-url').value.trim(),comment=$('#sub-note').value.trim(),s=getSub($('#sub-course').value),typ=$('#sub-type').value,atividadeId=$('#sub-activity').value||'';if(!s||!visibleSubjects().some(x=>x.id===s.id)){$('#form-message').textContent='Disciplina não autorizada para sua matrícula.';return}if(!isGitHubUrl(github)){$('#form-message').textContent='Use HTTPS: https://github.com/usuario/repositorio';return}if(comment.length>750){$('#form-message').textContent='O comentário pode ter no máximo 750 caracteres.';return}const btn=$('#submit-btn');btn.disabled=true;btn.textContent='Enviando...';try{const ref=F.push(F.ref(db,`${DB_ROOT}/submissoes/${user.uid}`));await F.set(ref,{disciplina:s.id,tipo:typ,semana:typ==='semanal'?Number($('#sub-week').value):null,atividadeId,github,comentario:comment,nome:management.profile()?.nome||user.displayName||user.email,email:user.email,criadoEm:Date.now()});$('#submit-modal').close();gradeSnapshot=null;toast('Entrega registrada no Firebase!');nav('submissions')}catch(err){$('#form-message').textContent=`Não foi possível registrar: ${err.message}. Confira as regras do Firebase.`}finally{btn.disabled=false;btn.textContent=' Enviar atividade'}}
+function showModal(spec=''){
+ if(!user||!management?.active())return;
+ const [id,typ,week]=spec.split(':'),allowed=visibleSubjects(),s=allowed.find(x=>x.id===id)||allowed[0];
+ if(!s){toast('Selecione uma disciplina no seu cadastro.');return}
+ $('#sub-course').innerHTML=allowed.map(x=>`<option value="${esc(x.id)}">${esc(x.nome)}</option>`).join('');
+ $('#sub-course').value=s.id;$('#sub-type').value=['semanal','pratica','projeto'].includes(typ)?typ:'pratica';
+ fillWeeks(Number(week)||1);$('#sub-url').value='';$('#sub-note').value='';$('#form-message').textContent='';$('#submit-modal').showModal();
+}
+function fillWeeks(preselected=1){
+ const s=getSub($('#sub-course').value);if(!s)return;
+ const weeks=s.semanas.filter(w=>!w.sem_tema);
+ $('#sub-week').innerHTML=weeks.map(w=>`<option value="${w.n}">Semana ${w.n}: ${esc(w.tema.slice(0,52))}</option>`).join('');
+ $('#sub-week').value=String(weeks.some(w=>Number(w.n)===Number(preselected))?preselected:weeks[0]?.n||'');
+ $('#week-wrap').classList.toggle('is-hidden',$('#sub-type').value!=='semanal');
+ const posts=management?.activityChoices(s.id,$('#sub-type').value)||'';
+ $('#sub-activity').innerHTML='<option value="">Lista/projeto fixo ou exercício da semana</option>'+posts;
+ $('#sub-activity-wrap').classList.toggle('is-hidden',!posts);
+}
+function isGitHubUrl(value){
+ try{const x=new URL(value);return x.protocol==='https:'&&!x.username&&!x.password&&!x.port&&(x.hostname==='github.com'||x.hostname==='www.github.com'||/^[a-z0-9-]+\.github\.io$/.test(x.hostname))&&x.pathname.split('/').filter(Boolean).length>=(x.hostname.endsWith('.github.io')?1:2)}catch{return false}
+}
+async function sendSubmission(e){
+ e.preventDefault();const message=$('#form-message');message.textContent='';
+ if(!user||!db||!F||!management?.active()){message.textContent='Faça login com matrícula aprovada para enviar.';return}
+ const uid=user.uid,version=sessionVersion,github=$('#sub-url').value.trim(),comment=$('#sub-note').value.trim(),s=getSub($('#sub-course').value),typ=$('#sub-type').value,atividadeId=$('#sub-activity').value||'';
+ if(!s||!visibleSubjects().some(x=>x.id===s.id)){message.textContent='Disciplina não autorizada para sua matrícula.';return}
+ if(!['semanal','pratica','projeto'].includes(typ)){message.textContent='Selecione um tipo de atividade válido.';return}
+ const post=atividadeId?management.getPost(atividadeId):null,semana=Number($('#sub-week').value);
+ if(atividadeId&&(!post||post.ativo===false||post.publicada===false||post.disciplina!==s.id||post.tipo!==typ)){message.textContent='Esta atividade não está disponível. Selecione novamente.';return}
+ if(typ==='semanal'&&!s.semanas.some(w=>!w.sem_tema&&Number(w.n)===semana)){message.textContent='Selecione uma semana válida.';return}
+ if(!isGitHubUrl(github)){message.textContent='Use um link HTTPS de repositório GitHub ou de um projeto no GitHub Pages.';return}
+ if(comment.length>750){message.textContent='O comentário pode ter no máximo 750 caracteres.';return}
+ const btn=$('#submit-btn');if(btn.disabled)return;btn.disabled=true;btn.textContent='Enviando...';
+ try{
+  const ref=F.push(F.ref(db,`${DB_ROOT}/submissoes/${uid}`));
+  await F.set(ref,{disciplina:s.id,tipo:typ,semana:typ==='semanal'?semana:null,atividadeId,github,comentario:comment,nome:management.profile()?.nome||user.displayName||user.email,email:user.email,criadoEm:Date.now(),notaMax:Number(post?.notaMax??(typ==='pratica'?2:10)),atividadeTitulo:post?.titulo||''});
+  if(version!==sessionVersion||user?.uid!==uid)return;
+  $('#submit-modal').close();gradeSnapshot=null;toast('Entrega registrada!');
+  if(currentPage==='submissions')await render();else nav('submissions');
+ }catch(err){if(version===sessionVersion&&user?.uid===uid)message.textContent='Não foi possível registrar a entrega. Confira sua conexão e tente novamente.'}
+ finally{btn.disabled=false;btn.textContent='Enviar atividade'}
+}
 function updateNav(){const p=currentPage==='course'||currentPage==='apostila'?'courses':currentPage;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('#teacher-nav').classList.toggle('is-hidden',!management?.owner())}
-async function render(){if(!user||!management)return;const parts=(location.hash||'#/home').slice(2).split('/').filter(Boolean);currentPage=parts[0]||'home';$('#breadcrumb').innerHTML=`PORTAL EDUCACIONAL <span>/</span> ${esc(currentPage.toUpperCase())}`;updateNav();const view=$('#view');document.body.classList.toggle('onboarding',!management.active());if(management.hasError?.()||!management.active()){view.innerHTML=management.renderGate();return}if(!management.owner()&&['teacher'].includes(currentPage)){nav('home');return}if(!management.owner()&&['course','apostila','tasks'].includes(currentPage)&&parts[1]&&!visibleSubjects().some(x=>x.id===parts[1])){view.innerHTML=empty('Sem matrícula nesta disciplina','Edite seu perfil para solicitar acesso a ela.');return}if(currentPage==='home')view.innerHTML=renderHome();else if(currentPage==='courses')view.innerHTML=renderCourses();else if(currentPage==='course'){selectedBim=0;view.innerHTML=renderCourse(parts[1]);}else if(currentPage==='tasks')view.innerHTML=renderTasks(parts[1]);else if(currentPage==='apostila')view.innerHTML=renderApostila(parts[1]);else if(currentPage==='tools')view.innerHTML=renderTools();else if(currentPage==='materials')view.innerHTML=renderMaterials();else if(currentPage==='extras')view.innerHTML=renderExtras();else if(currentPage==='guide')view.innerHTML=renderGuide();else if(currentPage==='profile')view.innerHTML=management.renderProfile();else if(currentPage==='submissions')await renderSubmissions();else if(currentPage==='notes')await renderNotes();else if(currentPage==='teacher')view.innerHTML=await management.renderAdmin();else view.innerHTML=empty('Página não encontrada','');window.scrollTo({top:0,behavior:'instant'});}
-function bootUI(){document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));$('#menu-toggle').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));const applyTheme=mode=>{const light=mode==='light';document.body.dataset.theme=light?'light':'dark';const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=light?'#f5f7fb':'#0b1220';document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-pressed',light?'true':'false');b.setAttribute('aria-label',light?'Ativar modo escuro':'Ativar modo claro');const icon=b.querySelector('[data-theme-symbol]'),caption=b.querySelector('[data-theme-caption]');if(icon)icon.textContent=light?'☀':'☾';if(caption)caption.textContent=light?'Modo claro':'Modo escuro';});};const savedTheme=localStorage.getItem('portal-educacional-theme');applyTheme(savedTheme||(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{const next=document.body.dataset.theme==='light'?'dark':'light';localStorage.setItem('portal-educacional-theme',next);applyTheme(next)}));$('#logout-btn').addEventListener('click',async()=>{if(auth&&F)await F.signOut(auth);toast('Você saiu da conta.')});$('#modal-close').onclick=$('#cancel-submit').onclick=()=>$('#submit-modal').close();$('#sub-course').addEventListener('change',()=>fillWeeks());$('#sub-type').addEventListener('change',()=>fillWeeks());$('#submit-form').addEventListener('submit',sendSubmission);window.addEventListener('hashchange',render);$('#view').addEventListener('submit',async e=>{if(management)await management.handleSubmit(e)});$('#view').addEventListener('change',async e=>{if(management&&await management.handleChange(e))return;const code=e.target.dataset.check;if(code){const [id,n,i]=code.split(':');localStorage.setItem(doneKey(id,n,i),e.target.checked?'1':'0')}});$('#view').addEventListener('input',e=>{if(management?.handleInput(e))return});$('#view').addEventListener('click',async e=>{if(management&&await management.handleClick(e))return;const b=e.target.closest('button');if(!b)return;if(b.dataset.go){nav(b.dataset.go);return}if(b.dataset.submit){showModal(b.dataset.submit);return}if(b.hasAttribute('data-expand')){const n=b.dataset.expand,target=$('#detail-'+n),expand=target.classList.contains('is-hidden');target.classList.toggle('is-hidden');b.setAttribute('aria-expanded',expand?'true':'false');return}if(b.hasAttribute('data-bim')){selectedBim=Number(b.dataset.bim);$('#view').innerHTML=renderCourse(location.hash.split('/')[2]);return}if(b.dataset.download){createApostila(b.dataset.download);return}if(b.hasAttribute('data-print')){window.print();return}if(b.dataset.grade){await saveGrade(b.dataset.grade);return}if(b.dataset.gradeFilter){gradeFilter=b.dataset.gradeFilter;await renderNotes();return}if(b.hasAttribute('data-notes-refresh')){await renderNotes(true);return}});}
-async function start(){try{subjects=await loadCurriculum();subjectById=Object.fromEntries(subjects.map(x=>[x.id,x]));bootUI();setConnection('Inicializando...');const base='https://www.gstatic.com/firebasejs/13.3.0/';const [appMod,authMod,dbMod]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-database.js')]);F={...authMod,...dbMod};const app=appMod.initializeApp(FIREBASE_CONFIG);auth=authMod.getAuth(app);db=dbMod.getDatabase(app);try{const fnMod=await import(base+'firebase-functions.js');const functions=fnMod.getFunctions(app,'us-central1');callableAI=fnMod.httpsCallable(functions,'corrigirEntregaGemini',{timeout:120000});}catch(e){console.warn('Função de correção IA indisponível',e);}management=createManagement({user:()=>user,db:()=>db,F:()=>F,subjects:()=>subjects,setSubjects:arr=>{subjects=arr;subjectById=Object.fromEntries(arr.map(x=>[x.id,x]))},render,toast,showModal,setSubmissionActivity:id=>{$('#sub-activity').value=id},signOut:()=>authMod.signOut(auth),aiGrade:async(uid,submissionId)=>{if(!callableAI)throw new Error('O serviço Gemini ainda não foi configurado no Firebase Functions.');const res=await callableAI({uid,submissionId});return res.data;}});await authMod.setPersistence(auth,authMod.browserLocalPersistence);$('#login-btn').addEventListener('click',async()=>{const b=$('#login-btn');b.disabled=true;$('#login-help').textContent='';try{await authMod.signInWithPopup(auth,new authMod.GoogleAuthProvider())}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){await authMod.signInWithRedirect(auth,new authMod.GoogleAuthProvider())}else{$('#login-help').textContent=errorMsg(e);b.disabled=false}}});await authMod.getRedirectResult(auth).catch(()=>null);authMod.onAuthStateChanged(auth,async u=>{gradeSnapshot=null;user=u;if(u){$('#user-name').textContent=u.displayName||u.email||'Aluno(a)';$('#user-avatar').textContent=(u.displayName||'A').slice(0,1).toUpperCase();$('#login-screen').classList.add('is-hidden');$('#app-shell').classList.remove('is-hidden');await management.init(u);setConnection(management.hasError?.()?'Acesso restrito':(management.active()?'Conectado':'Matrícula pendente'));await render()}else{$('#app-shell').classList.add('is-hidden');$('#login-screen').classList.remove('is-hidden');setConnection('Aguardando login');$('#login-btn').disabled=false}})}catch(err){console.error(err);$('#login-screen').classList.remove('is-hidden');$('#login-help').textContent='Não foi possível iniciar o portal: '+err.message;setConnection('Erro de configuração')}finally{setTimeout(()=>$('#splash').classList.add('fade'),300);setTimeout(()=>$('#splash').remove(),850)}if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js').catch(console.warn)}
-function errorMsg(e){if(e.code==='auth/unauthorized-domain')return 'Domínio não autorizado no Firebase. No console, adicione perabru.github.io em Authentication  Configurações  Domínios autorizados.';if(e.code==='auth/operation-not-allowed')return 'Ative o provedor Google em Firebase Authentication  Métodos de login.';if(e.code==='auth/popup-closed-by-user')return 'Login cancelado. Clique novamente para tentar.';return `Falha na autenticação: ${e.message}`}
+let sessionVersion=0,renderVersion=0,signingOut=false,installPrompt=null;
+const savedValue=(key,fallback=null)=>{try{return localStorage.getItem(key)??fallback}catch{return fallback}};
+function storeValue(key,value){try{localStorage.setItem(key,value)}catch{}}
+function closeMenu(){
+ $('#sidebar').classList.remove('open');
+ $('#menu-toggle').setAttribute('aria-expanded','false');
+}
+function clearSession(){
+ sessionVersion++;renderVersion++;
+ user=null;gradeSnapshot=null;teacherRows=[];gradeFilter='todos';selectedBim=0;currentPage='home';
+ management?.reset?.();
+ closeMenu();
+ if($('#submit-modal').open)$('#submit-modal').close();
+ $('#submit-form').reset();$('#form-message').textContent='';$('#view').replaceChildren();
+ $('#user-name').textContent='Estudante';$('#user-avatar').textContent='U';
+ $('#teacher-nav').classList.add('is-hidden');document.body.classList.remove('onboarding');
+ $('#app-shell').classList.add('is-hidden');$('#login-screen').classList.remove('is-hidden');
+ $('#login-help').textContent='';$('#login-btn').disabled=false;
+ history.replaceState(null,'',location.pathname+location.search+'#/home');
+ setConnection('Aguardando login');
+}
+async function logout(){
+ if(signingOut||!auth||!F)return;
+ signingOut=true;
+ document.querySelectorAll('[data-signout]').forEach(b=>b.disabled=true);
+ try{await F.signOut(auth);clearSession();toast('Você saiu da conta.');$('#login-btn').focus()}
+ catch(e){toast('Não foi possível sair. Tente novamente.');console.warn('Sair:',e.code||e.message)}
+ finally{signingOut=false;document.querySelectorAll('[data-signout]').forEach(b=>b.disabled=false)}
+}
+async function handleAuthState(u){
+ const version=++sessionVersion;
+ renderVersion++;gradeSnapshot=null;teacherRows=[];gradeFilter='todos';
+ if(!u){clearSession();return}
+ management?.reset?.();user=u;
+ $('#view').innerHTML='<div class="loading-panel" role="status">Carregando seu cadastro...</div>';
+ document.body.classList.remove('onboarding');closeMenu();
+ $('#user-name').textContent=u.displayName||u.email||'Aluno(a)';
+ $('#user-avatar').textContent=(u.displayName||'A').slice(0,1).toUpperCase();
+ $('#login-screen').classList.add('is-hidden');$('#app-shell').classList.remove('is-hidden');
+ await management.init(u);
+ if(version!==sessionVersion||user?.uid!==u.uid)return;
+ setConnection(management.hasError?.()?'Acesso restrito':(management.active()?'Conectado':'Matrícula pendente'));
+ await render();
+}
+async function render(){
+ if(!user||!management)return;
+ const version=++renderVersion,uid=user.uid;
+ const parts=(location.hash||'#/home').replace(/^#\/?/,'').split('/').filter(Boolean);
+ currentPage=parts[0]||'home';
+ $('#breadcrumb').innerHTML=`PORTAL EDUCACIONAL <span>/</span> ${esc(currentPage.toUpperCase())}`;
+ updateNav();const view=$('#view');
+ document.body.classList.toggle('onboarding',management.hasError?.()||!management.active());
+ if(management.hasError?.()||!management.active()){view.innerHTML=management.renderGate();return}
+ if(!management.owner()&&currentPage==='teacher'){nav('home');return}
+ if(!management.owner()&&['course','apostila','tasks'].includes(currentPage)&&parts[1]&&!visibleSubjects().some(x=>x.id===parts[1])){
+  view.innerHTML=empty('Sem matrícula nesta disciplina','Edite seu perfil para solicitar acesso a ela.');return;
+ }
+ const pages={home:renderHome,courses:renderCourses,tools:renderTools,materials:renderMaterials,extras:renderExtras,guide:renderGuide,profile:()=>management.renderProfile()};
+ if(pages[currentPage])view.innerHTML=pages[currentPage]();
+ else if(currentPage==='course'){selectedBim=0;view.innerHTML=renderCourse(parts[1])}
+ else if(currentPage==='tasks')view.innerHTML=renderTasks(parts[1]);
+ else if(currentPage==='apostila')view.innerHTML=getSub(parts[1])?renderApostila(parts[1]):empty('Disciplina não encontrada','Confira o endereço.');
+ else if(currentPage==='submissions')await renderSubmissions();
+ else if(currentPage==='notes')await renderNotes();
+ else if(currentPage==='teacher'){
+  view.innerHTML='<div class="loading-panel" role="status">Carregando o painel...</div>';
+  const html=await management.renderAdmin();
+  if(version===renderVersion&&user?.uid===uid)view.innerHTML=html;
+ }else view.innerHTML=empty('Página não encontrada','');
+ if(version===renderVersion&&user?.uid===uid)window.scrollTo({top:0,behavior:'instant'});
+}
+function bootUI(){
+ document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));
+ $('#menu-toggle').addEventListener('click',()=>{
+  const open=$('#sidebar').classList.toggle('open');$('#menu-toggle').setAttribute('aria-expanded',String(open));
+ });
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
+ document.addEventListener('click',e=>{
+  if(e.target.closest('[data-signout]')){e.stopPropagation();void logout();return}
+  if($('#sidebar').classList.contains('open')&&!e.target.closest('#sidebar, #menu-toggle'))closeMenu();
+ });
+ const applyTheme=mode=>{
+  const light=mode==='light';document.body.dataset.theme=light?'light':'dark';
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=light?'#f5f7fb':'#0b1220';
+  document.querySelectorAll('[data-theme-toggle]').forEach(b=>{
+   b.setAttribute('aria-pressed',String(light));b.setAttribute('aria-label',light?'Ativar modo escuro':'Ativar modo claro');
+   const icon=b.querySelector('[data-theme-symbol]'),caption=b.querySelector('[data-theme-caption]');
+   if(icon)icon.textContent=light?'☀':'☾';if(caption)caption.textContent=light?'Modo claro':'Modo escuro';
+  });
+ };
+ applyTheme(savedValue('portal-educacional-theme')||(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
+ document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const next=document.body.dataset.theme==='light'?'dark':'light';storeValue('portal-educacional-theme',next);applyTheme(next);
+ }));
+ $('#modal-close').onclick=$('#cancel-submit').onclick=()=>$('#submit-modal').close();
+ $('#sub-course').addEventListener('change',()=>fillWeeks());$('#sub-type').addEventListener('change',()=>fillWeeks());
+ $('#submit-form').addEventListener('submit',sendSubmission);
+ window.addEventListener('hashchange',()=>{void render().catch(e=>{console.error(e);toast('Não foi possível abrir esta tela. Tente novamente.')})});
+ $('#view').addEventListener('submit',async e=>{if(management)await management.handleSubmit(e)});
+ $('#view').addEventListener('change',async e=>{
+  if(management&&await management.handleChange(e))return;
+  const code=e.target.dataset.check;if(code){const [id,n,i]=code.split(':');storeValue(doneKey(id,n,i),e.target.checked?'1':'0')}
+ });
+ $('#view').addEventListener('input',e=>management?.handleInput(e));
+ $('#view').addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.hasAttribute('data-signout')){e.stopPropagation();await logout();return}
+  if(b.dataset.go){nav(b.dataset.go);return}
+  if(management&&await management.handleClick(e))return;
+  if(b.dataset.submit){showModal(b.dataset.submit);return}
+  if(b.hasAttribute('data-expand')){
+   const target=$('#detail-'+b.dataset.expand),expand=target.classList.contains('is-hidden');target.classList.toggle('is-hidden');b.setAttribute('aria-expanded',String(expand));return;
+  }
+  if(b.hasAttribute('data-bim')){selectedBim=Number(b.dataset.bim);$('#view').innerHTML=renderCourse(location.hash.split('/')[2]);return}
+  if(b.dataset.download){createApostila(b.dataset.download);return}
+  if(b.hasAttribute('data-print')){window.print();return}
+  if(b.dataset.grade){await saveGrade(b.dataset.grade);return}
+  if(b.dataset.gradeFilter){gradeFilter=b.dataset.gradeFilter;await renderNotes();return}
+  if(b.hasAttribute('data-notes-refresh'))await renderNotes(true);
+ });
+}
+async function setupPWA(){
+ const button=$('#install-btn');
+ const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(!installed())button.classList.remove('is-hidden')});
+ if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!installed())button.classList.remove('is-hidden');
+ button.addEventListener('click',async()=>{
+  if(!installPrompt){toast('No Safari, toque em Compartilhar e em Adicionar à Tela de Início.');return}
+  const prompt=installPrompt;installPrompt=null;button.classList.add('is-hidden');
+  try{await prompt.prompt();await prompt.userChoice}catch{toast('Use a opção Instalar app no menu do navegador.')}
+ });
+ window.addEventListener('appinstalled',()=>{installPrompt=null;button.classList.add('is-hidden')});
+ if(!('serviceWorker'in navigator))return;
+ try{
+  const registration=await navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'});
+  let reloadForUpdate=false;
+  const showUpdate=()=>{if(registration.waiting)$('#update-notice').classList.remove('is-hidden')};
+  showUpdate();registration.addEventListener('updatefound',()=>{
+   const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdate()});
+  });
+  $('#update-btn').onclick=()=>{if(registration.waiting){reloadForUpdate=true;registration.waiting.postMessage({type:'SKIP_WAITING'})}};
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadForUpdate){reloadForUpdate=false;location.reload()}});
+  void registration.update().catch(()=>{});
+ }catch(e){console.warn('PWA:',e.message)}
+}
+async function start(){
+ bootUI();void setupPWA();$('#login-btn').disabled=true;
+ try{
+  subjects=await loadCurriculum();subjectById=Object.fromEntries(subjects.map(x=>[x.id,x]));
+  setConnection('Inicializando...');
+  const base='https://www.gstatic.com/firebasejs/13.3.0/';
+  const [appMod,authMod,dbMod]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-database.js')]);
+  F={...authMod,...dbMod};const app=appMod.initializeApp(FIREBASE_CONFIG);auth=authMod.getAuth(app);db=dbMod.getDatabase(app);
+  management=createManagement({
+   user:()=>user,db:()=>db,F:()=>F,subjects:()=>subjects,
+   setSubjects:arr=>{subjects=arr;subjectById=Object.fromEntries(arr.map(x=>[x.id,x]))},render,toast,showModal,
+   setSubmissionActivity:id=>{$('#sub-activity').value=id},signOut:logout,
+   aiGrade:async(uid,submissionId)=>{
+    if(!callableAI){const fnMod=await import(base+'firebase-functions.js');callableAI=fnMod.httpsCallable(fnMod.getFunctions(app,'us-central1'),'corrigirEntregaGemini',{timeout:120000})}
+    const res=await callableAI({uid,submissionId});return res.data;
+   }
+  });
+  try{await authMod.setPersistence(auth,authMod.browserLocalPersistence)}
+  catch{try{await authMod.setPersistence(auth,authMod.browserSessionPersistence)}catch{await authMod.setPersistence(auth,authMod.inMemoryPersistence)}}
+  $('#login-btn').addEventListener('click',async()=>{
+   const b=$('#login-btn');b.disabled=true;$('#login-help').textContent='';
+   const provider=new authMod.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});
+   try{await authMod.signInWithPopup(auth,provider)}
+   catch(e){
+    if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){
+     try{await authMod.signInWithRedirect(auth,provider)}catch(redirectError){$('#login-help').textContent=errorMsg(redirectError)}
+    }else $('#login-help').textContent=errorMsg(e);
+   }finally{b.disabled=false}
+  });
+  await authMod.getRedirectResult(auth).catch(e=>{$('#login-help').textContent=errorMsg(e)});
+  authMod.onAuthStateChanged(auth,u=>{void handleAuthState(u).catch(e=>{console.error(e);toast('Não foi possível carregar a conta. Tente entrar novamente.')})});
+  $('#login-btn').disabled=false;
+ }catch(err){
+  console.error(err);$('#login-screen').classList.remove('is-hidden');$('#app-shell').classList.add('is-hidden');
+  $('#login-help').textContent=navigator.onLine?'Não foi possível carregar o portal. Recarregue para tentar novamente.':'Conecte-se à internet para entrar e consultar seus dados.';
+  $('#login-btn').disabled=false;$('#login-btn').textContent='Recarregar portal';$('#login-btn').onclick=()=>location.reload();setConnection('Sem conexão');
+ }finally{
+  setTimeout(()=>$('#splash')?.classList.add('fade'),100);setTimeout(()=>$('#splash')?.remove(),450);
+ }
+}
+function errorMsg(e){
+ if(e.code==='auth/unauthorized-domain')return 'Este endereço precisa ser autorizado no Firebase pelo administrador.';
+ if(e.code==='auth/operation-not-allowed')return 'O login Google precisa ser habilitado pelo administrador.';
+ if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return 'Login cancelado. Toque em Entrar com Google para tentar novamente.';
+ if(e.code==='auth/network-request-failed')return 'Confira sua conexão com a internet e tente novamente.';
+ return 'Não foi possível entrar com Google. Tente novamente.';
+}
 start();

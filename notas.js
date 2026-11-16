@@ -4,17 +4,18 @@ const fmt=n=>Number(n).toLocaleString('pt-BR',{maximumFractionDigits:2,minimumFr
 const date=n=>n?new Date(n).toLocaleDateString('pt-BR'):'—';
 const kind=t=>t==='pratica'?'Lista prática':t==='projeto'?'Projeto avaliativo':'Exercícios semanais';
 const badge=s=>s?'<span class="badge green">Corrigido</span>':'<span class="badge blue">Aguardando correção</span>';
-function safeGithub(raw){try{const u=new URL(raw);if(u.protocol!=='https:'||u.hostname!=='github.com'||u.pathname.split('/').filter(Boolean).length<2)return '';return u.href}catch{return ''}}
+function safeGithub(raw){try{const u=new URL(raw),pages=/^[a-z0-9-]+\.github\.io$/.test(u.hostname);if(u.protocol!=='https:'||u.username||u.password||u.port||!(u.hostname==='github.com'||u.hostname==='www.github.com'||pages)||u.pathname.split('/').filter(Boolean).length<(pages?1:2))return '';return u.href}catch{return ''}}
+function validGrade(grade){return grade&&grade.nota!==null&&grade.nota!==undefined&&grade.nota!==''&&Number.isFinite(Number(grade.nota));}
 function mostRecent(rows,t){return rows.filter(r=>r.o.tipo===t&&r.grade&&Number.isFinite(Number(r.grade.nota))).sort((a,b)=>Number(b.grade.avaliadoEm||b.o.criadoEm)-Number(a.grade.avaliadoEm||a.o.criadoEm))[0]||null}
 function metric(label,val,detail,icon){return `<div class="grade-kpi"><div class="grade-kpi-icon">${icon}</div><small>${esc(label)}</small><strong>${esc(val)}</strong><span>${esc(detail)}</span></div>`}
 /** Somente correções do professor contam nas estatísticas. Sugestões de IA nunca são nota final. */
 export function renderStudentGradeDashboard({subjects=[],submissions={},grades={},posts={},filter='todos',studentName='Estudante'}={}){
- const entries=Object.entries(submissions).map(([id,o])=>{const a=posts[o.atividadeId]||{};let max=Number(a.notaMax??(o.tipo==='pratica'?2:10));if(!Number.isFinite(max)||max<=0)max=o.tipo==='pratica'?2:10;return {id,o,grade:grades[id]||null,max,activity:a}}).sort((a,b)=>Number(b.o.criadoEm||0)-Number(a.o.criadoEm||0));
+ const entries=Object.entries(submissions).map(([id,o])=>{const current=posts[o.atividadeId]||{},a={...current,titulo:o.atividadeTitulo||current.titulo};let max=Number(o.notaMax??a.notaMax??(o.tipo==='pratica'?2:10));if(!Number.isFinite(max)||max<=0)max=o.tipo==='pratica'?2:10;return {id,o,grade:validGrade(grades[id])?grades[id]:null,max,activity:a}}).sort((a,b)=>Number(b.o.criadoEm||0)-Number(a.o.criadoEm||0));
  const finished=entries.filter(e=>e.grade&&Number.isFinite(Number(e.grade.nota)));
  const pending=entries.length-finished.length;
- const approved=entries.filter(e=>e.o.tipo==='pratica'&&e.grade);
- const projects=entries.filter(e=>e.o.tipo==='projeto'&&e.grade);
- const avg=(r)=>r.length?fmt(r.reduce((a,b)=>a+Number(b.grade.nota)/b.max,0)/r.length*100)+'%':'—';
+ const approved=finished.filter(e=>e.o.tipo==='pratica');
+ const projects=finished.filter(e=>e.o.tipo==='projeto');
+ const avg=(r)=>r.length?fmt(r.reduce((a,b)=>a+Math.min(b.max,Math.max(0,Number(b.grade.nota)))/b.max,0)/r.length*100)+'%':'—';
  const performance=finished.length?Math.round(finished.reduce((sum,e)=>sum+(Math.min(e.max,Math.max(0,Number(e.grade.nota)))/e.max),0)/finished.length*100):0;
  const subt=`${esc(studentName.split(' ')[0])}, acompanhe a evolução das listas (até 2,0) e projetos (até 10,0). Somente avaliações revisadas pelo professor aparecem aqui.`;
  const tabs=[['todos','Todas'],['pratica','Listas práticas'],['projeto','Projetos'],['semanal','Semanais']];

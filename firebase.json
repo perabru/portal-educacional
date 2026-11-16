@@ -1,3 +1,17 @@
 {
-  "functions": {"source": "functions", "codebase": "portal-educacional", "runtime": "nodejs22", "ignore": ["node_modules", ".git", "*.local", ".env", ".env.*"]}
+  "functions": {
+    "source": "functions",
+    "codebase": "portal-educacional",
+    "runtime": "nodejs22",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "*.local",
+      ".env",
+      ".env.*"
+    ]
+  },
+  "database": {
+    "rules": "firebase.rules.json"
+  }
 }

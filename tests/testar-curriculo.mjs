@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const source=await readFile(new URL('../curriculo.js',import.meta.url),'utf8');
+const curriculum=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const expected=JSON.parse(await readFile(new URL('../curriculo.json',import.meta.url),'utf8'));
+assert.deepEqual(await curriculum.loadCurriculum(),expected,'O currículo compactado deve corresponder ao JSON publicado');
+assert.equal(expected.length,9);
+assert.deepEqual(expected.filter(x=>x.id.startsWith('maximus_')).map(x=>x.nome),['TCA','TCC']);
+assert(expected.every(x=>Array.isArray(x.semanas)));
+console.log('Currículo: dados compactados sincronizados, disciplinas sem nomes de escolas: OK');
