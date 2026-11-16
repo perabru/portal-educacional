@@ -15,14 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Obter repositório independente
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Obter materiais originais para migração inicial
-        if: \${{ hashFiles('index.html') == '' }}
+        if: ${{ hashFiles('index.html') == '' }}
         uses: actions/checkout@v4
         with:
           repository: perabru/maximus-inic
@@ -32,7 +32,7 @@ jobs:
             portal-univap
           sparse-checkout-cone-mode: false
       - name: Montar Portal Educacional independente
-        if: \${{ hashFiles('index.html') == '' }}
+        if: ${{ hashFiles('index.html') == '' }}
         run: |
           python -m pip install --disable-pip-version-check pillow
           cp -a .portal-source/portal-univap/. .
@@ -40,14 +40,14 @@ jobs:
           import base64,lzma,json
           from pathlib import Path
           source=Path('tools/portal_build_bundle.b64').read_text(encoding='utf8').strip()
-          scripts=lzma.decompress(base64.b64decode(source)).decode('utf8').split('\n# ==== FINALIZE ====\n')
+          scripts=lzma.decompress(base64.b64decode(source)).decode('utf8').split(chr(10)+'# ==== FINALIZE ===='+chr(10))
           assert len(scripts)==2,'Pacote de transformação inválido'
           for i,code in enumerate(scripts):
               code=code.replace("p=Path('/mnt/data/work_portal/portal-educacional')","p=Path.cwd()")
               exec(compile(code,f'construir_portal_{i}.py','exec'),{'__name__':'__main__'})
           Path('.github/workflows/pages.yml').unlink(missing_ok=True)
           app=Path('app.js').read_text(encoding='utf8')
-          app=app.replace('<p>\${subjects.length} disciplinas,','<p>\${visibleSubjects().length} disciplinas,')
+          app=app.replace('<p>${subjects.length} disciplinas,','<p>${visibleSubjects().length} disciplinas,')
           app=app.replace('subjects.filter(s=>ORIGINALS[s.id])','visibleSubjects().filter(s=>ORIGINALS[s.id])')
           app=app.replace("if(id==='maximus_tcc')return [['Sistema funcional e demonstração',4],['Documento conforme o manual da instituição',3],['Documentação e repositório',2],['Apresentação e defesa',1]];","if(id==='maximus_tca')return [['Problema de pesquisa e justificativa',2],['Objetivos e metodologia',3],['Planejamento e evidências',3],['Referências e documentação',2]];if(id==='maximus_tcc')return [['Pesquisa e metodologia',3],['Resultados e evidências',3],['Documentação e referências',2],['Apresentação e defesa',2]];")
           Path('app.js').write_text(app,encoding='utf8')
